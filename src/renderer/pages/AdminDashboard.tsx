@@ -28,6 +28,7 @@ function AdminDashboard(): JSX.Element {
     const [localIp, setLocalIp] = useState<string>('0.0.0.0')
     const [availablePrinters, setAvailablePrinters] = useState<PrinterDevice[]>([])
     const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
+    const [isLoadingDevices, setIsLoadingDevices] = useState(false)
 
     const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -54,16 +55,29 @@ function AdminDashboard(): JSX.Element {
     // Fetch video devices (webcams/capture cards)
     useEffect(() => {
         const fetchDevices = async () => {
+            setIsLoadingDevices(true)
             try {
                 // Request permissions first to get proper device labels
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                } catch (e) {
+                    console.warn('Initial getUserMedia failed, device labels might be generic:', e)
+                }
+                
                 const devices = await navigator.mediaDevices.enumerateDevices()
                 const videoInputs = devices.filter(device => device.kind === 'videoinput')
                 setVideoDevices(videoInputs)
+                
                 // Stop the temporary stream
-                stream.getTracks().forEach(track => track.stop())
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop())
+                }
             } catch (err) {
                 console.error('Error fetching video devices:', err)
+                setVideoDevices([])
+            } finally {
+                setIsLoadingDevices(false)
             }
         }
         if (activeTab === 'printers') {
@@ -1375,7 +1389,8 @@ function AdminDashboard(): JSX.Element {
                                     }}
                                 >
                                     <option value="" disabled={videoDevices.length > 0}>
-                                        {videoDevices.length > 0 ? 'Select a camera...' : 'Memuat daftar kamera...'}
+                                        {isLoadingDevices ? 'Memuat daftar kamera...' : 
+                                         videoDevices.length > 0 ? 'Select a camera...' : 'Tidak ada kamera ditemukan'}
                                     </option>
                                     {videoDevices.map((device, index) => (
                                         <option key={device.deviceId} value={device.deviceId}>

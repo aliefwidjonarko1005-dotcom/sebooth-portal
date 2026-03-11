@@ -71,8 +71,8 @@
 }
 
 .previewFrame {
-    height: 85vh;
-    max-height: 85vh;
+    height: 92vh;
+    max-height: 92vh;
     width: auto;
     box-shadow: var(--shadow-2xl);
     border-radius: var(--radius-sm);
@@ -338,8 +338,8 @@
 /* Animation Preview */
 .animationPreview {
     position: relative;
-    width: 85%;
-    max-height: 85vh;
+    width: 95%;
+    max-height: 92vh;
     display: flex;
     align-items: center;
     justify-content: center;

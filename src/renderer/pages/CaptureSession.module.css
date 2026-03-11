@@ -166,8 +166,8 @@
 }
 
 .previewImage {
-    max-width: 90%;
-    max-height: 90%;
+    max-width: 98%;
+    max-height: 98%;
     object-fit: contain;
     border-radius: var(--radius-lg);
     box-shadow: 0 0 40px rgba(0,0,0,0.5);
@@ -239,8 +239,8 @@
 }
 
 .galleryToggle {
-    width: 80px;
-    height: 80px;
+    width: 220px;
+    height: 220px;
     border-radius: var(--radius-xl);
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(10px);
