@@ -1114,7 +1114,10 @@ function PostProcessing(): JSX.Element {
                 <div
                     className={styles.previewFrame}
                     style={{
-                        aspectRatio: sessionFrame ? `${sessionFrame.canvasWidth} / ${sessionFrame.canvasHeight}` : 'auto'
+                        aspectRatio: activeTab === 'gif' 
+                            ? 'auto' 
+                            : (sessionFrame ? `${sessionFrame.canvasWidth} / ${sessionFrame.canvasHeight}` : 'auto'),
+                        width: activeTab === 'gif' ? '100%' : 'auto'
                     }}
                 >
                     {renderPreview()}
