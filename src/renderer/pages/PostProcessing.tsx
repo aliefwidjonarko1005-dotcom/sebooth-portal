@@ -38,6 +38,7 @@ function PostProcessing(): JSX.Element {
     const [selectedFilter, setSelectedFilter] = useState<FilterType>('none')
     const [activeTab, setActiveTab] = useState<MediaType>('photo')
     const [isPrinting, setIsPrinting] = useState(false)
+    const [printQuantity, setPrintQuantity] = useState(2)
     const [showSuccess, setShowSuccess] = useState(false)
     const [compositeDataUrl, setCompositeDataUrl] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -51,6 +52,7 @@ function PostProcessing(): JSX.Element {
     const [photoStripUrl, setPhotoStripUrl] = useState<string | null>(null)
     const [gifUrl, setGifUrl] = useState<string | null>(null)
     const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([])
+    const [sessionSavedLocally, setSessionSavedLocally] = useState(false)
 
     // For GIF/Live preview
     const [previewIndex, setPreviewIndex] = useState(0)
@@ -81,6 +83,115 @@ function PostProcessing(): JSX.Element {
             if (previewIntervalRef.current) clearInterval(previewIntervalRef.current)
         }
     }, [activeTab, photos.length])
+
+    // Auto-save session locally when composite is generated
+    useEffect(() => {
+        if (!compositeDataUrl || !currentSession || sessionSavedLocally) return
+
+        const autoSave = async () => {
+            try {
+                const sessionId = currentSession.id
+                const timestamp = Date.now()
+
+                const photoRefs = photos.map((p, i) => ({
+                    path: p.imagePath,
+                    filename: `photo_${sessionId}_${i}_${timestamp}.jpg`
+                }))
+
+                // Generate GIF from photos
+                let gifDataUrl = ''
+                if (photos.length > 0 && sessionFrame) {
+                    try {
+                        const gifCanvas = document.createElement('canvas')
+                        const firstSlot = sessionFrame.slots?.[0]
+                        const slotAspect = firstSlot ? (firstSlot.width / firstSlot.height) : 1.5
+                        gifCanvas.width = 1080
+                        gifCanvas.height = Math.round(1080 / slotAspect)
+                        const gctx = gifCanvas.getContext('2d', { willReadFrequently: true, alpha: false })
+                        if (gctx) {
+                            gctx.imageSmoothingEnabled = true
+                            gctx.imageSmoothingQuality = 'high'
+                            const framesBase64: string[] = []
+                            for (const photo of photos) {
+                                const img = new Image()
+                                img.crossOrigin = 'anonymous'
+                                img.src = photo.imagePath
+                                await new Promise(r => { img.onload = r })
+                                const imgAspect = img.width / img.height
+                                const canvasAspect = gifCanvas.width / gifCanvas.height
+                                let dw = gifCanvas.width, dh = gifCanvas.height, dx = 0, dy = 0
+                                if (imgAspect > canvasAspect) {
+                                    dh = gifCanvas.height; dw = gifCanvas.height * imgAspect; dx = (gifCanvas.width - dw) / 2
+                                } else {
+                                    dw = gifCanvas.width; dh = gifCanvas.width / imgAspect; dy = (gifCanvas.height - dh) / 2
+                                }
+                                gctx.fillStyle = '#ffffff'
+                                gctx.fillRect(0, 0, gifCanvas.width, gifCanvas.height)
+                                gctx.drawImage(img, dx, dy, dw, dh)
+                                framesBase64.push(gifCanvas.toDataURL('image/jpeg', 0.95))
+                            }
+                            if (window.api.system.generateHqGif) {
+                                const hqGifResult = await window.api.system.generateHqGif(framesBase64, 500)
+                                if (hqGifResult.success && hqGifResult.data) {
+                                    gifDataUrl = hqGifResult.data
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Auto-save GIF gen failed:', e)
+                    }
+                }
+
+                // Collect video refs and overlay for live video compositing
+                const videoRefs: { path: string; filename: string }[] = []
+                let hasVideoRecordings = false
+                let overlayRef: { path: string; filename: string } | undefined
+
+                if (sessionFrame) {
+                    for (const slot of sessionFrame.slots) {
+                        const sourceSlotId = slot.duplicateOfSlotId || slot.id
+                        const photoInfo = photos.find(p => p.slotId === sourceSlotId)
+                        if (photoInfo?.videoPath && !photoInfo.videoPath.startsWith('blob:')) {
+                            hasVideoRecordings = true
+                            videoRefs.push({
+                                path: photoInfo.videoPath,
+                                filename: `video_${sessionId}_${slot.id}_${timestamp}.webm`
+                            })
+                        } else {
+                            videoRefs.push({ path: '', filename: '' })
+                        }
+                    }
+
+                    if (hasVideoRecordings && sessionFrame.overlayPath) {
+                        overlayRef = { path: sessionFrame.overlayPath, filename: `frame_${sessionId}_${timestamp}.png` }
+                    }
+                }
+
+                const localSaveRes = await window.api.system.saveSessionLocally({
+                    sessionId,
+                    stripDataUrl: compositeDataUrl,
+                    gifDataUrl: gifDataUrl || undefined,
+                    photos: photoRefs,
+                    videos: videoRefs,
+                    overlay: overlayRef,
+                    frameConfig: sessionFrame ? {
+                        width: sessionFrame.canvasWidth,
+                        height: sessionFrame.canvasHeight,
+                        slots: sessionFrame.slots.map(s => ({ width: s.width, height: s.height, x: s.x, y: s.y, rotation: s.rotation || 0 }))
+                    } : undefined
+                })
+
+                if (localSaveRes.success) {
+                    setSessionSavedLocally(true)
+                    console.log('Session auto-saved locally (with GIF/video)')
+                }
+            } catch (err) {
+                console.error('Auto-save failed:', err)
+            }
+        }
+
+        autoSave()
+    }, [compositeDataUrl, currentSession, sessionSavedLocally])
 
     // Generate composite from photos using canvas
     const generateCompositeFromPhotos = async (): Promise<void> => {
@@ -211,27 +322,46 @@ function PostProcessing(): JSX.Element {
         }
     }
 
-    // Handle print - need to save first
+    // Handle print - uses session folder strip for proper PDF logging
     const handlePrint = async (): Promise<void> => {
-        if (!compositeDataUrl) return
+        if (!compositeDataUrl || !currentSession) return
 
         setIsPrinting(true)
         setError(null)
 
         try {
-            // Save data URL to temp file for printing
-            const saveResult = await window.api.system.saveDataUrl(
-                compositeDataUrl,
-                `print_${Date.now()}.jpg`
-            )
+            // Find strip in session folder (auto-saved earlier)
+            let stripPath: string | null = null
+            try {
+                const findResult = await window.api.system.findSessionStrip(currentSession.id)
+                if (findResult.success && findResult.data) {
+                    stripPath = findResult.data
+                }
+            } catch { /* ignore, use fallback */ }
 
-            if (saveResult.success && saveResult.data) {
-                const result = await window.api.printer.print(saveResult.data)
+            // Fallback: save to temp if session strip not found
+            if (!stripPath) {
+                const saveResult = await window.api.system.saveDataUrl(
+                    compositeDataUrl,
+                    `strip_${currentSession.id}.jpg`
+                )
+                if (saveResult.success && saveResult.data) {
+                    stripPath = saveResult.data
+                }
+            }
+
+            if (stripPath) {
+                // printQuantity = number of strips (2 strips per sheet)
+                const copies = Math.max(1, Math.round(printQuantity / 2))
+                const result = await window.api.printer.printWithOptions(stripPath, {
+                    printer: config.printerName || undefined,
+                    copies
+                })
                 if (!result.success) {
                     setError(result.error || 'Print failed')
                 }
             } else {
-                setError('Failed to save image for printing')
+                setError('Failed to find or save strip for printing')
             }
         } catch (err) {
             setError('Print failed: ' + (err as Error).message)
@@ -532,8 +662,8 @@ function PostProcessing(): JSX.Element {
 
     // Handle sending email with photos
     const handleSendEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
-        if (!currentSession || !galleryUrl) {
-            return { success: false, error: 'Please generate QR code first to upload photos' }
+        if (!currentSession) {
+            return { success: false, error: 'No active session' }
         }
 
         setIsSendingEmail(true)
@@ -541,7 +671,7 @@ function PostProcessing(): JSX.Element {
             const result = await sendPhotoEmail({
                 to: email,
                 sessionId: currentSession.id,
-                galleryUrl: galleryUrl,
+                galleryUrl: galleryUrl || '',
                 photoStripUrl: photoStripUrl || undefined,
                 photoUrls: uploadedPhotoUrls
             })
@@ -550,6 +680,12 @@ function PostProcessing(): JSX.Element {
                 // Save email to session store
                 setEmail(email)
                 setLastEmail(email)
+
+                // Rename the session folder to include email
+                await window.api.system.renameSessionFolder({
+                    sessionId: currentSession.id,
+                    email
+                })
             }
 
             return result
@@ -1038,13 +1174,27 @@ function PostProcessing(): JSX.Element {
                         {isGeneratingQR ? 'Generating...' : '📱 QR Code'}
                     </button>
 
-                    <button
-                        className={styles.actionBtn}
-                        onClick={handlePrint}
-                        disabled={isPrinting || !compositeDataUrl}
-                    >
-                        {isPrinting ? 'Printing...' : '🖨️ Print Photo'}
-                    </button>
+                    <div className={styles.printRow}>
+                        <button
+                            className={styles.actionBtn}
+                            onClick={handlePrint}
+                            disabled={isPrinting || !compositeDataUrl}
+                        >
+                            {isPrinting ? 'Printing...' : '🖨️ Print Photo'}
+                        </button>
+                        <div className={styles.quantitySelector}>
+                            <button
+                                className={styles.qtyBtn}
+                                onClick={() => setPrintQuantity(q => Math.max(2, q - 2))}
+                                disabled={printQuantity <= 2}
+                            >−</button>
+                            <span className={styles.qtyValue}>{printQuantity} strips</span>
+                            <button
+                                className={styles.qtyBtn}
+                                onClick={() => setPrintQuantity(q => q + 2)}
+                            >+</button>
+                        </div>
+                    </div>
 
                     <button onClick={handleDone} className={`${styles.actionBtn} ${styles.primary}`}>
                         ✓ Done
@@ -1056,7 +1206,8 @@ function PostProcessing(): JSX.Element {
             <EmailModal
                 isOpen={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                onSubmit={async (email) => { await handleSendEmail(email) }}
+                onSend={handleSendEmail}
+                isSending={isSendingEmail}
             />
 
             {/* QR Code Modal (2-Step for Offline Sharing) */}

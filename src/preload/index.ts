@@ -32,7 +32,10 @@ const api = {
             ipcRenderer.invoke('camera:use-mock'),
 
         useReal: (): Promise<APIResponse<void>> =>
-            ipcRenderer.invoke('camera:use-real')
+            ipcRenderer.invoke('camera:use-real'),
+
+        useDirectPtp: (): Promise<APIResponse<void>> =>
+            ipcRenderer.invoke('camera:use-direct-ptp')
     },
 
     // Printer APIs
@@ -105,7 +108,13 @@ const api = {
             ipcRenderer.invoke('system:save-session-locally', params),
 
         generateHqGif: (framesBase64: string[], delayMs: number): Promise<APIResponse<string>> =>
-            ipcRenderer.invoke('system:generate-hq-gif', framesBase64, delayMs)
+            ipcRenderer.invoke('system:generate-hq-gif', framesBase64, delayMs),
+
+        renameSessionFolder: (params: { sessionId: string; email: string }): Promise<APIResponse<string>> =>
+            ipcRenderer.invoke('system:rename-session-folder', params),
+
+        findSessionStrip: (sessionId: string): Promise<APIResponse<string>> =>
+            ipcRenderer.invoke('system:find-session-strip', sessionId)
     },
 
     // Image APIs

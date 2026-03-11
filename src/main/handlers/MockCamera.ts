@@ -76,10 +76,11 @@ export class MockCamera extends CameraHandler {
             if (this.mockImagePath && existsSync(this.mockImagePath)) {
                 copyFileSync(this.mockImagePath, outputPath)
             } else {
-                // Create a placeholder notification
-                console.log(`[MockCamera] Would capture to: ${outputPath}`)
-                // In real usage, we'd create a placeholder image
-                // For now, we'll just return success for testing
+                // Write a tiny 1x1 valid JPEG to prevent broken image icons
+                const dummyJpegBase64 = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='
+                const buffer = Buffer.from(dummyJpegBase64, 'base64')
+                require('fs').writeFileSync(outputPath, buffer)
+                console.log(`[MockCamera] Captured dummy image to: ${outputPath}`)
             }
 
             this.captureCount++

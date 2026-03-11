@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useFrameStore, useAppConfig, useFilterStore } from '../stores'
-import { PhotoSlot } from '@shared/types'
+import { PhotoSlot, PrinterDevice } from '@shared/types'
 import { getSessionHistory, SessionHistoryItem } from '../lib/supabase'
 import styles from './AdminDashboard.module.css'
 
@@ -14,7 +14,7 @@ function AdminDashboard(): JSX.Element {
     const { config, updateConfig } = useAppConfig()
     const { filters, addFilter, removeFilter } = useFilterStore()
 
-    const [activeTab, setActiveTab] = useState<'frames' | 'timers' | 'filters' | 'payment' | 'history' | 'sharing'>('frames')
+    const [activeTab, setActiveTab] = useState<'frames' | 'timers' | 'filters' | 'payment' | 'history' | 'sharing' | 'printers'>('frames')
     const [selectedFrameId, setSelectedFrameId] = useState<string | null>(frames[0]?.id || null)
     const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null)
     const [dragMode, setDragMode] = useState<DragMode>(null)
@@ -25,8 +25,51 @@ function AdminDashboard(): JSX.Element {
     const [historyTotal, setHistoryTotal] = useState(0)
     const [historyPage, setHistoryPage] = useState(0)
     const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+    const [localIp, setLocalIp] = useState<string>('0.0.0.0')
+    const [availablePrinters, setAvailablePrinters] = useState<PrinterDevice[]>([])
+    const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
 
     const canvasRef = useRef<HTMLDivElement>(null)
+
+    // Fetch local IP on mount
+    useEffect(() => {
+        const fetchIp = async () => {
+            const result = await window.api.system.getLocalIp()
+            if (result.success && result.data) setLocalIp(result.data)
+        }
+        fetchIp()
+    }, [])
+
+    // Fetch available printers
+    useEffect(() => {
+        const fetchPrinters = async () => {
+            const result = await window.api.printer.list()
+            if (result.success && result.data) {
+                setAvailablePrinters(result.data)
+            }
+        }
+        fetchPrinters()
+    }, [])
+
+    // Fetch video devices (webcams/capture cards)
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                // Request permissions first to get proper device labels
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+                const devices = await navigator.mediaDevices.enumerateDevices()
+                const videoInputs = devices.filter(device => device.kind === 'videoinput')
+                setVideoDevices(videoInputs)
+                // Stop the temporary stream
+                stream.getTracks().forEach(track => track.stop())
+            } catch (err) {
+                console.error('Error fetching video devices:', err)
+            }
+        }
+        if (activeTab === 'printers') {
+            fetchDevices()
+        }
+    }, [activeTab])
 
     const selectedFrame = frames.find(f => f.id === selectedFrameId)
 
@@ -124,6 +167,7 @@ function AdminDashboard(): JSX.Element {
             loadHistory()
         }
     }, [activeTab, historyPage])
+
 
     const loadHistory = async () => {
         setIsLoadingHistory(true)
@@ -381,6 +425,12 @@ function AdminDashboard(): JSX.Element {
                     onClick={() => setActiveTab('sharing')}
                 >
                     📡 Sharing
+                </button>
+                <button
+                    className={`${styles.tab} ${activeTab === 'printers' ? styles.active : ''}`}
+                    onClick={() => setActiveTab('printers')}
+                >
+                    🖨️ Printers
                 </button>
             </nav>
 
@@ -1142,7 +1192,255 @@ function AdminDashboard(): JSX.Element {
                                         </div>
                                     </div>
                                 )}
+
+                                {config.sharingMode === 'local' && localIp && (
+                                    <div style={{ marginTop: '10px', padding: '20px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                                        <h4 style={{ margin: '0 0 10px 0', color: '#60a5fa', fontSize: '16px' }}>📱 Remote Admin Monitor</h4>
+                                        <p style={{ margin: '0 0 15px 0', color: '#9ca3af', fontSize: '14px', lineHeight: '1.5' }}>
+                                            To view sessions and remotely trigger prints from another device (like your phone or tablet), connect that device to this laptop's WiFi hotspot and open this URL in your browser:
+                                        </p>
+                                        <div style={{
+                                            background: '#000',
+                                            padding: '12px 16px',
+                                            borderRadius: '8px',
+                                            fontFamily: 'monospace',
+                                            fontSize: '18px',
+                                            color: '#10b981',
+                                            textAlign: 'center',
+                                            userSelect: 'all'
+                                        }}>
+                                            http://{localIp}:5050/monitor
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Printers Configuration Tab */}
+                {activeTab === 'printers' && (
+                    <div className={styles.timersTab}>
+                        {/* Camera Mode Section */}
+                        <div className={styles.timerCard} style={{ gridColumn: '1 / -1' }}>
+                            <h3>📷 Camera Mode</h3>
+                            <p>Choose between webcam screenshot or DSLR trigger (native Windows WIA)</p>
+                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px', flexDirection: 'column' }}>
+                                <label style={{
+                                    display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer',
+                                    padding: '15px',
+                                    border: config.cameraMode === 'mock' ? '2px solid #10b981' : '2px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '12px',
+                                    background: config.cameraMode === 'mock' ? 'rgba(16,185,129,0.1)' : 'transparent'
+                                }}>
+                                    <input
+                                        type="radio"
+                                        name="cameraMode"
+                                        value="mock"
+                                        checked={config.cameraMode === 'mock' || !config.cameraMode}
+                                        onChange={async () => {
+                                            updateConfig({ cameraMode: 'mock' })
+                                            await window.api.camera.useMock()
+                                        }}
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'white' }}>🖥️ Mock Camera (Webcam)</div>
+                                        <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px' }}>Uses built-in webcam or external USB webcam. Takes screenshot from video feed.</div>
+                                    </div>
+                                </label>
+
+                                <label style={{
+                                    display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer',
+                                    padding: '15px',
+                                    border: config.cameraMode === 'ptp' ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '12px',
+                                    background: config.cameraMode === 'ptp' ? 'rgba(239,68,68,0.1)' : 'transparent'
+                                }}>
+                                    <input
+                                        type="radio"
+                                        name="cameraMode"
+                                        value="ptp"
+                                        checked={config.cameraMode === 'ptp'}
+                                        onChange={async () => {
+                                            updateConfig({ cameraMode: 'ptp' })
+                                            await window.api.camera.useDirectPtp()
+                                        }}
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'white' }}>🚀 DSLR Direct (BETA)</div>
+                                        <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px' }}>
+                                            Standalone Mode: No external apps needed. 
+                                            Sebooth controls the shutter directly via USB.
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <label style={{
+                                    display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer',
+                                    padding: '15px',
+                                    border: config.cameraMode === 'dslr' ? '2px solid #3b82f6' : '2px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '12px',
+                                    background: config.cameraMode === 'dslr' ? 'rgba(59,130,246,0.1)' : 'transparent'
+                                }}>
+                                    <input
+                                        type="radio"
+                                        name="cameraMode"
+                                        value="dslr"
+                                        checked={config.cameraMode === 'dslr'}
+                                        onChange={async () => {
+                                            updateConfig({ cameraMode: 'dslr' })
+                                            await window.api.camera.useReal()
+                                        }}
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                    <div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'white' }}>📸 DSLR Camera (CLI Mode)</div>
+                                        <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px' }}>
+                                            Legacy Mode: Uses external dslr-remote or DSLR Remote Pro.
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {config.cameraMode === 'ptp' && (
+                                <div style={{ marginTop: '15px', padding: '15px', background: 'rgba(239,68,68,0.1)', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                    <p style={{ margin: 0, fontSize: '13px', color: '#fca5a5', lineHeight: '1.6' }}>
+                                        🔥 <b>Mode Direct Shutter (Standalone)</b><br />
+                                        • Tidak perlu install aplikasi luar lagi.<br />
+                                        • Sebooth langsung mengirim sinyal jepret ke Canon 60D.<br />
+                                        • <b>Penting:</b> Tetap gunakan Canon Webcam Utility untuk live preview.
+                                    </p>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const result = await window.api.camera.capture('admin_test')
+                                                if (result.success) alert('Shutter Berhasil Ter-trigger! 📸')
+                                                else alert('Gagal: ' + result.error)
+                                            } catch (e: any) {
+                                                alert('Error: ' + e.message)
+                                            }
+                                        }}
+                                        style={{ marginTop: '10px', background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                                    >
+                                        ⚡ TEST DIRECT SHUTTER
+                                    </button>
+                                </div>
+                            )}
+
+                            {config.cameraMode === 'dslr' && (
+                                <div style={{ marginTop: '15px', padding: '15px', background: 'rgba(59,130,246,0.1)', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.3)' }}>
+                                    <p style={{ margin: 0, fontSize: '13px', color: '#60a5fa', lineHeight: '1.6' }}>
+                                        🚀 <b>Mode CLI (Best Performance)</b><br />
+                                        • <b>Live Preview:</b> Gunakan <b>Canon EOS Webcam Utility</b> (Gratis).<br />
+                                        • <b>Shutter / Jepret:</b> Menggunakan CLI ringan (dslr-remote).<br />
+                                        • Laptop tetap enteng & tidak lemot selama acara.
+                                    </p>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const result = await window.api.camera.capture('admin_test')
+                                                if (result.success) alert('Shutter Berhasil Ter-trigger! 📸')
+                                                else alert('Gagal: ' + result.error)
+                                            } catch (e: any) {
+                                                alert('Error: ' + e.message)
+                                            }
+                                        }}
+                                        style={{ marginTop: '10px', background: '#3b82f6', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                                    >
+                                        📸 TEST CLI SHUTTER
+                                    </button>
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: '20px', padding: '15px', background: 'var(--color-bg-tertiary)', borderRadius: '10px', border: '1px solid var(--color-border)' }}>
+                                <h4>🖥️ Live Preview Source (Webcam / Capture Card)</h4>
+                                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '10px' }}>
+                                    Pilih perangkat sumber video untuk preview di layar (misalnya USB Capture Card atau Webcam).
+                                </p>
+                                <select 
+                                    value={config.selectedCameraId || ''} 
+                                    onChange={(e) => updateConfig({ selectedCameraId: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        maxWidth: '400px',
+                                        padding: '12px',
+                                        fontSize: '14px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--color-border)',
+                                        background: 'var(--color-bg-primary)',
+                                        color: 'white',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="" disabled={videoDevices.length > 0}>
+                                        {videoDevices.length > 0 ? 'Select a camera...' : 'Memuat daftar kamera...'}
+                                    </option>
+                                    {videoDevices.map((device, index) => (
+                                        <option key={device.deviceId} value={device.deviceId}>
+                                            {device.label || `Camera ${index + 1}`}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <div className={styles.timerCard} style={{ gridColumn: '1 / -1' }}>
+                            <h3>🖨️ Auto-Printing System</h3>
+                            <p>Enable automatic printing after post-processing is complete</p>
+                            <div className={styles.timerToggle}>
+                                <label className={styles.toggleSwitch}>
+                                    <input
+                                        type="checkbox"
+                                        checked={config.printerEnabled}
+                                        onChange={(e) => updateConfig({ printerEnabled: e.target.checked })}
+                                    />
+                                    <span className={styles.toggleSlider}></span>
+                                </label>
+                                <span className={styles.toggleLabel}>
+                                    {config.printerEnabled ? 'Auto-Printing Enabled' : 'Auto-Printing Disabled'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className={styles.timerCard} style={{ gridColumn: '1 / -1' }}>
+                            <h3>⚙️ Printer Selection</h3>
+                            <p>Select which printer to use for photos and photostrips</p>
+                            
+                            <div style={{ marginTop: '15px' }}>
+                                <select 
+                                    value={config.printerName || ''} 
+                                    onChange={(e) => updateConfig({ printerName: e.target.value })}
+                                    disabled={!config.printerEnabled || availablePrinters.length === 0}
+                                    style={{
+                                        width: '100%',
+                                        maxWidth: '400px',
+                                        padding: '12px',
+                                        fontSize: '14px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--color-border)',
+                                        background: 'var(--color-bg-tertiary)',
+                                        color: 'white',
+                                        cursor: (!config.printerEnabled || availablePrinters.length === 0) ? 'not-allowed' : 'pointer',
+                                        opacity: (!config.printerEnabled || availablePrinters.length === 0) ? 0.5 : 1
+                                    }}
+                                >
+                                    <option value="" disabled>Select a printer...</option>
+                                    {availablePrinters.map(printer => (
+                                        <option key={printer.name} value={printer.name}>
+                                            {printer.name} {printer.isDefault ? '(Default)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {availablePrinters.length === 0 && (
+                                <p style={{ color: 'var(--color-error)', marginTop: '10px', fontSize: '12px' }}>
+                                    No printers detected on this system.
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}

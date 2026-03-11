@@ -1,48 +1,33 @@
 import { PrinterDevice, PrintResult } from '@shared/types'
+import { BrowserWindow } from 'electron'
+import * as fs from 'fs'
+import * as path from 'path'
+import { PDFDocument, degrees } from 'pdf-lib'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 
-// Conditional import for pdf-to-printer (Windows)
-let pdfToPrinter: typeof import('pdf-to-printer') | null = null
+const execAsync = promisify(exec)
 
 /**
  * PrinterHandler - Manages silent printing operations
- * Uses pdf-to-printer on Windows for dialog-free printing
+ * Generates verification PDFs and uses native Windows System.Drawing for absolute compatibility with dye-sub printers
  */
 export class PrinterHandler {
-    private initialized: boolean = false
-
-    constructor() {
-        this.initialize()
-    }
-
-    private async initialize(): Promise<void> {
-        try {
-            if (process.platform === 'win32') {
-                pdfToPrinter = await import('pdf-to-printer')
-            }
-            this.initialized = true
-        } catch (error) {
-            console.error('Failed to initialize printer module:', error)
-        }
-    }
+    constructor() { }
 
     /**
      * Get list of available printers
      */
     async listPrinters(): Promise<PrinterDevice[]> {
         try {
-            if (!pdfToPrinter) {
-                await this.initialize()
-            }
+            const tempWin = new BrowserWindow({ show: false })
+            const printers = await tempWin.webContents.getPrintersAsync()
+            tempWin.destroy()
 
-            if (pdfToPrinter) {
-                const printers = await pdfToPrinter.getPrinters()
-                return printers.map(printer => ({
-                    name: printer.name,
-                    isDefault: printer.isDefault || false
-                }))
-            }
-
-            return []
+            return printers.map(p => ({
+                name: p.name,
+                isDefault: p.isDefault
+            }))
         } catch (error) {
             console.error('Failed to list printers:', error)
             return []
@@ -58,35 +43,92 @@ export class PrinterHandler {
     }
 
     /**
-     * Print an image file silently (no dialog)
+     * Print an image file silently
+     * Generates a PDF for logging, but uses native Windows PowerShell for flawless dye-sub physical printing
+     * @param copies Number of 4R pages to generate (each page = 2 strips)
      */
-    async print(filePath: string, printerName?: string): Promise<PrintResult> {
+    async print(filePath: string, printerName?: string, copies: number = 1): Promise<PrintResult> {
         try {
-            if (!pdfToPrinter) {
-                await this.initialize()
+            // 1. Generate PDF for session logging purposes
+            const pdfDoc = await PDFDocument.create()
+            const imageBytes = fs.readFileSync(filePath)
+            const image = await pdfDoc.embedJpg(imageBytes)
+
+            const pt4 = 288 // 4 inches
+            const pt6 = 432 // 6 inches
+
+            const pageWidth = pt4
+            const pageHeight = pt6
+
+            const numPages = Math.max(1, copies)
+            for (let i = 0; i < numPages; i++) {
+                const page = pdfDoc.addPage([pageWidth, pageHeight])
+                page.drawImage(image, { x: 0, y: 0, width: pageWidth, height: pageHeight })
             }
 
-            if (!pdfToPrinter) {
-                return {
-                    success: false,
-                    error: 'Printer module not available'
+            const pdfBytes = await pdfDoc.save()
+            const pdfPath = path.join(
+                path.dirname(filePath),
+                path.basename(filePath, '.jpg') + `_4R_${numPages}pages.pdf`
+            )
+            fs.writeFileSync(pdfPath, pdfBytes)
+            console.log(`Saved PDF (${pageWidth}x${pageHeight}pt, ${numPages} pages) to:`, pdfPath)
+
+            // 2. Trigger physical printer silently via Native Windows Spooler (C# System.Drawing.Printing inside PS)
+            // This is infinitely more reliable for strict dye-sub printers (DNP RX1) than SumatraPDF
+            if (printerName && printerName.toLowerCase() !== 'print to pdf') {
+                try {
+                    // Create a PowerShell script string that compiles and executes a C# print job.
+                    // This bypasses any third-party PDF renderer quirks.
+                    const psCommand = `
+$code = @"
+using System;
+using System.Drawing;
+using System.Drawing.Printing;
+public class ImagePrinter {
+    public static void Print(string file, string printer, int copies) {
+        PrintDocument pd = new PrintDocument();
+        pd.PrinterSettings.PrinterName = printer;
+        pd.PrinterSettings.Copies = (short)copies;
+
+        // We handle the rotation ourselves (Rotate90FlipNone), so tell Windows this is Portrait
+        // to prevent Auto-Rotate interference.
+        pd.DefaultPageSettings.Landscape = false;
+        
+        pd.PrintPage += (sender, args) => {
+            using (Image img = Image.FromFile(file)) {
+                // To trigger the 2-inch split cut on DNP RX1 and similar dye-sub printers,
+                // the driver strictly requires the image to be oriented as Landscape 6x4.
+                // We rotate the Portrait 1200x1800 template 90 degrees to become 1800x1200.
+                img.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                
+                args.Graphics.DrawImage(img, args.PageBounds);
+            }
+        };
+        pd.Print();
+    }
+}
+"@
+Add-Type -TypeDefinition $code -ReferencedAssemblies System.Drawing
+[ImagePrinter]::Print('${filePath.replace(/'/g, "''")}', '${printerName.replace(/'/g, "''")}', ${numPages})
+`
+                    
+                    // Encode command to base64 (UTF-16LE) to avoid syntax/escaping issues with multiline strings
+                    const base64Command = Buffer.from(psCommand, 'utf16le').toString('base64')
+                    
+                    console.log(`Sending native print job to ${printerName} for ${numPages} copies...`)
+                    await execAsync(`powershell -EncodedCommand ${base64Command}`)
+                    
+                    return { success: true }
+                } catch (printErr: any) {
+                    console.error('Physical print execution failed:', printErr)
+                    return { success: false, error: printErr.message }
                 }
+            } else {
+                return { success: true, error: 'Saved PDF verification only' }
             }
-
-            const options: { printer?: string } = {}
-            if (printerName) {
-                options.printer = printerName
-            }
-
-            await pdfToPrinter.print(filePath, options)
-
-            return { success: true }
-        } catch (error) {
-            const err = error as Error
-            return {
-                success: false,
-                error: err.message
-            }
+        } catch (error: any) {
+            return { success: false, error: error.message }
         }
     }
 
@@ -102,33 +144,8 @@ export class PrinterHandler {
         }
     ): Promise<PrintResult> {
         try {
-            if (!pdfToPrinter) {
-                await this.initialize()
-            }
-
-            if (!pdfToPrinter) {
-                return {
-                    success: false,
-                    error: 'Printer module not available'
-                }
-            }
-
-            await pdfToPrinter.print(filePath, {
-                printer: options.printer,
-                scale: options.scale
-            })
-
-            // Handle multiple copies
-            if (options.copies && options.copies > 1) {
-                for (let i = 1; i < options.copies; i++) {
-                    await pdfToPrinter.print(filePath, {
-                        printer: options.printer,
-                        scale: options.scale
-                    })
-                }
-            }
-
-            return { success: true }
+            const copies = options.copies || 1
+            return await this.print(filePath, options.printer, copies)
         } catch (error) {
             const err = error as Error
             return {

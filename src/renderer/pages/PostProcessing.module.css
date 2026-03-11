@@ -231,6 +231,57 @@
     opacity: 0.9;
 }
 
+/* Print Quantity Row */
+.printRow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.quantitySelector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.qtyBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.qtyBtn:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    border-color: var(--color-accent);
+}
+
+.qtyBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.qtyValue {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    min-width: 70px;
+    text-align: center;
+}
+
 .errorMessage {
     padding: var(--spacing-sm);
     font-size: var(--font-size-xs);

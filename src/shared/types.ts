@@ -81,6 +81,11 @@ export interface AppConfig {
     sessionTimeout: number // seconds (legacy, kept for compatibility)
     activeFrameIds: string[]  // Multiple frames can be active
     timerEnabled: boolean // Enable/disable countdown timer
+
+    // Printer
+    printerEnabled: boolean // Enable/disable auto printing
+    printerName: string // Selected printer name
+
     // Per-session timeouts
     frameSelectionTimeout: number // seconds - timeout for frame selection page
     captureTimeout: number // seconds - timeout for capture session
@@ -95,8 +100,14 @@ export interface AppConfig {
     paymentInstructions: string // Payment instructions displayed to user
     paymentTimeout: number // seconds - timeout for payment page
 
+    // Camera
+    cameraMode: 'mock' | 'dslr' | 'ptp' // Mock (webcam), DSLR (CLI), or PTP (Direct)
+    selectedCameraId?: string // Device ID for USB capture card / specific webcam
+
     // Sharing
     sharingMode: 'cloud' | 'local' // Cloud (Drive/Supabase) or Local WiFi (DSLRBooth mode)
+    wifiSsid?: string
+    wifiPassword?: string
 }
 
 export interface LUTFilter {

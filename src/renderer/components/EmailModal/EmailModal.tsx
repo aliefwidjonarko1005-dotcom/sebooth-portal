@@ -27,17 +27,22 @@ export function EmailModal({ isOpen, onClose, onSend, isSending }: EmailModalPro
             return
         }
 
-        const result = await onSend(email)
+        try {
+            const result = await onSend(email)
 
-        if (result.success) {
-            setSuccess(true)
-            setTimeout(() => {
-                onClose()
-                setEmail('')
-                setSuccess(false)
-            }, 2000)
-        } else {
-            setError(result.error || 'Failed to send email')
+            if (result.success) {
+                setSuccess(true)
+                setTimeout(() => {
+                    onClose()
+                    setEmail('')
+                    setSuccess(false)
+                }, 2000)
+            } else {
+                setError(result.error || 'Failed to send email')
+            }
+        } catch (err) {
+            console.error('EmailModal send error:', err)
+            setError('Send failed: ' + (err instanceof Error ? err.message : String(err)))
         }
     }
 

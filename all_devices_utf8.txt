@@ -1,0 +1,285 @@
+﻿
+FriendlyName                      
+------------                      
+Intel(R) Integrated Sensor Solu...
+Intel(R) Dynamic Tuning Technol...
+HP LEDM                           
+Intel(R) Innovation Platform Fr...
+Intel(R) Innovation Platform Fr...
+Wireless Controller               
+EPSON L5290 Series FAX            
+Motherboard resources             
+Motherboard resources             
+Motherboard resources             
+Intel(R) HID Event Filter         
+USB Mass Storage Device           
+Microsoft Streaming Service Proxy 
+Microsoft ACPI-Compliant Embedd...
+EPSON L5290 Series FAX            
+USB Composite Device              
+Microsoft ACPI-Compliant Contro...
+ACPI Fan                          
+EPSON Utility                     
+ACPI Processor Aggregator         
+USB Mass Storage Device           
+Unknown USB Device (Port Reset ...
+USB Video                         
+Intel(R) Wi-Fi 6 AX101            
+Root Print Queue                  
+Dai Nippon Printing  DS-RX1       
+Microsoft Input Configuration D...
+HID-compliant game controller     
+EPSON L5290 Series                
+HID-compliant vendor-defined de...
+Volume Manager                    
+Headphones (ROBOT RB521)          
+Microsoft Bluetooth LE Enumerator 
+Headset Microphone (Wireless Co...
+EPSON Scanner                     
+D:\                               
+USB Composite Device              
+AB13X USB Audio                   
+HID-compliant consumer control ...
+Intel(R) Serial IO GPIO Host Co...
+WAN Miniport (PPPOE)              
+USB Input Device                  
+Microsoft Hyper-V Virtual Machi...
+Microsoft Basic Display Driver    
+Converted Portable Device Contr...
+ACPI Sleep Button                 
+Generic SuperSpeed USB Hub        
+Microsoft Hypervisor Service      
+Microsoft Print to PDF            
+DS-RX1                            
+Brother DCP-L2540DW series        
+ACPI Thermal Zone                 
+Microsoft Windows Management In...
+Microsoft AC Adapter              
+HP LaserJet M101-M106             
+USB Composite Device              
+Wireless Controller               
+Device Firmware                   
+Microsoft RRAS Root Enumerator    
+Motherboard resources             
+HP LaserJet M101-M106(REST)       
+Intel(R) USB 3.10 eXtensible Ho...
+WAN Miniport (PPTP)               
+Microsoft Hyper-V Virtualizatio...
+High precision event timer        
+Intel(R) GNA Scoring Accelerato...
+Motherboard resources             
+POLYTRON TV (HD Audio Driver fo...
+WAN Miniport (IKEv2)              
+Composite Bus Enumerator          
+Kingston XS1000 USB Device        
+Microsoft Virtual Drive Enumerator
+Speakers (Realtek(R) Audio)       
+USB Composite Device              
+Intel(R) Wireless Bluetooth(R)    
+Microsoft Storage Spaces Contro...
+HID-compliant vendor-defined de...
+Intel(R) Platform Monitoring Te...
+HID Keyboard Device               
+Microsoft Kernel Debug Network ...
+ROBOT RB521                       
+EPSON L5290 Series                
+USB Input Device                  
+HID-compliant consumer control ...
+MTD camera                        
+Intel(R) Serial IO I2C Host Con...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+12th Gen Intel(R) Core(TM) i5-1...
+DS-RX1                            
+HID-compliant game controller     
+USB Composite Device              
+Intel(R) Innovation Platform Fr...
+Realtek Hardware Support Applic...
+Intel(R) Host Bridge/DRAM Regis...
+Headset (ROBOT RB521)             
+Intel(R) Serial IO SPI Host Con...
+USB Composite Device              
+ROBOT RB521 Hands-Free AG         
+Intel(R) USB 3.20 eXtensible Ho...
+Brother Scanner c1                
+Programmable interrupt controller 
+Canon iP2700 series               
+Intel® Smart Sound Technology BUS 
+HP LaserJet M101-M106(IPP WinUSB) 
+ACPI Lid                          
+EOS Webcam Utility                
+Standard NVM Express Controller   
+Headset Earphone (Wireless Cont...
+EPSON WF-3720 Series FAX          
+Microsoft Bluetooth Enumerator    
+UMBus Root Bus Enumerator         
+USB Composite Device              
+Device Firmware                   
+Charge Arbitration Driver         
+EPSON Utility                     
+HP LaserJet M101-M106 PCLm-S      
+HID-compliant game controller     
+L5290 Series                      
+Bluetooth                         
+HP USB-C Multi-port Hub           
+Intel® Smart Sound Technology OED 
+Microsoft Radio Device Enumerat...
+USB Mass Storage Device           
+Intel(R) iCLS Client              
+USB Digital Audio                 
+L5290 Series                      
+Microsoft Device Association Ro...
+USB Composite Device              
+Intel(R) Shared SRAM - 51EF       
+ACPI x64-based PC                 
+D:\                               
+Microsoft Windows Management In...
+Generic Monitor                   
+Brother Laser Type1 Class Driver  
+EPSON WF-3720 Series              
+Intel(R) SPI (flash) Controller...
+WAN Miniport (Network Monitor)    
+WAN Miniport (IP)                 
+USB Input Device                  
+Headset (ROBOT RB521 Hands-Free)  
+USB Composite Device              
+Microsoft Windows Management In...
+PCI Express Root Complex          
+EPSON Scanner                     
+Bluetooth Device (RFCOMM Protoc...
+HID-compliant game controller     
+HID-compliant wireless radio co...
+Bluetooth Device (Personal Area...
+Intel(R) LPC Controller - 5182    
+Intel(R) Iris(R) Xe Graphics      
+HID-compliant consumer control ...
+EPSON WF-3720 Series              
+Realtek Audio Universal Service   
+Microsoft Hyper-V PCI Server      
+PPID BRIDA                        
+HID-compliant consumer control ...
+Microphone Array (Realtek(R) Au...
+ACPI Power Button                 
+Microsoft ACPI-Compliant System   
+                                  
+Microsoft Basic Render Driver     
+Wireless Controller               
+Axioo HYPE-R5 OLED                
+HID-compliant game controller     
+WAN Miniport (SSTP)               
+Volume                            
+Microsoft UEFI-Compliant System   
+Generic STORAGE DEVICE USB Device 
+Device Firmware                   
+EPSON WF-3720 Series FAX          
+HP LaserJet M101-M106(IPP1 WinUSB)
+Generic USB Hub                   
+Intel(R) Management Engine Inte...
+Trusted Platform Module 2.0       
+Kingston XS1000 SCSI Disk Device  
+Brother DCP-L2540DW series        
+EPSON Storage USB Device          
+ROBOT RB521 Avrcp Transport       
+Intel(R) Serial IO I2C Host Con...
+ACPI Wake Alarm                   
+Canon EOS 60D                     
+Device Firmware                   
+HID-compliant mouse               
+Volume                            
+Unknown USB Device (Device Desc...
+USB Root Hub (USB 3.0)            
+Intel(R) Power Engine Plug-in     
+USB Input Device                  
+Volume                            
+HID-compliant system controller   
+Microsoft Hyper-V Virtual Disk ...
+Motherboard resources             
+USB Input Device                  
+HID-compliant consumer control ...
+Microsoft Streaming Quality Man...
+Generic USB Hub                   
+Volume                            
+Intel(R) Management Engine WMI ...
+Portable Device Control device    
+Microsoft GS Wavetable Synth      
+Intel Tile Device                 
+Intel(R) Innovation Platform Fr...
+Intel(R) Dynamic Application Lo...
+Intel(R) Innovation Platform Fr...
+Wi-Fi                             
+Canon iP2700 series               
+ROBOT RB521 Avrcp Transport       
+Apple Mobile Device USB Composi...
+USB Input Device                  
+HID-compliant mouse               
+SDVPNV2410512TMHV7HK              
+EPSON L5290 Series                
+Standard PS/2 Keyboard            
+EPSON L5290 Series                
+PPID BRIDA                        
+Voice Clarity                     
+NDIS Virtual Network Adapter En...
+Realtek Asio Component            
+HP HP LaserJet M101-M106          
+Realtek Audio Effects Component   
+Generic Monitor (LG TV SSCR2)     
+Microsoft IPP Class Driver        
+Integrated Monitor                
+Microsoft VHD Loopback Controller 
+Volume                            
+WF-3720 Series                    
+ROBOT RB521 Hands-Free            
+WF-3720 Series                    
+Intel(R) SMBus - 51A3             
+OneNote (Desktop)                 
+USB Input Device                  
+Microsoft Wi-Fi Direct Virtual ...
+Microsoft Wi-Fi Direct Virtual ...
+EPSON L200 Series                 
+HID-compliant touch pad           
+System Firmware                   
+HID-compliant system controller   
+HD Audio Driver for Display Audio 
+USB Root Hub (USB 3.0)            
+Microsoft System Management BIO...
+HID-compliant consumer control ...
+Motherboard resources             
+ROBOT RB521                       
+Intel® Smart Sound Technology D...
+Microsoft Streaming Clock Proxy   
+HID-compliant consumer control ...
+HID Keyboard Device               
+EPSON WF-3720 Series              
+HID-compliant consumer control ...
+Realtek(R) Audio                  
+Volume                            
+Plug and Play Software Device E...
+HID-compliant consumer control ...
+Generic Monitor (POLYTRON TV)     
+System timer                      
+Intel(R) Serial IO I2C Host Con...
+USB Composite Device              
+USB Input Device                  
+Volume                            
+Intel® PROSet/Wireless WiFi Sof...
+Remote Desktop Device Redirecto...
+Intel(R) Serial IO I2C Host Con...
+I2C HID Device                    
+Volume                            
+WAN Miniport (IPv6)               
+Xbox 360 Controller for Windows   
+Intel(R) PEG60 - 464D             
+USB Attached SCSI (UAS) Mass St...
+HD Audio Driver for Display Audio 
+WAN Miniport (L2TP)               
+
+

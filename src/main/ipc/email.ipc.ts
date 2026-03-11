@@ -112,7 +112,15 @@ export function registerEmailHandlers(ipcMain: IpcMain): void {
             const attachments: { filename: string; path: string }[] = []
             try {
                 const documentsPath = app.getPath('documents')
-                const sessionPath = join(documentsPath, 'Sebooth', 'Sessions', `Session_${params.sessionId}`)
+                const sessionsRoot = join(documentsPath, 'Sebooth', 'Sessions')
+
+                // Find session folder dynamically (supports Session_<id> and Session_<email>_<id>)
+                let sessionPath = join(sessionsRoot, `Session_${params.sessionId}`)
+                if (!existsSync(sessionPath) && existsSync(sessionsRoot)) {
+                    const folders = readdirSync(sessionsRoot)
+                    const match = folders.find(f => f.startsWith('Session_') && f.endsWith(params.sessionId))
+                    if (match) sessionPath = join(sessionsRoot, match)
+                }
 
                 if (existsSync(sessionPath)) {
                     const files = readdirSync(sessionPath)

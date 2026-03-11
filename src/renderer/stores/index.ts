@@ -26,6 +26,11 @@ const defaultConfig: AppConfig = {
     sessionTimeout: 120,
     activeFrameIds: [],
     timerEnabled: true,
+
+    // Printer
+    printerEnabled: false,
+    printerName: '',
+
     // Per-session timeouts
     frameSelectionTimeout: 60,
     captureTimeout: 120,
@@ -39,7 +44,9 @@ const defaultConfig: AppConfig = {
     midtransServerKey: '',
     paymentInstructions: 'Scan QR code dengan aplikasi e-wallet atau mobile banking Anda. Pembayaran akan terkonfirmasi otomatis.',
     paymentTimeout: 300, // 5 minutes
-    sharingMode: 'cloud' // Can be 'cloud' or 'local'
+    sharingMode: 'cloud', // Can be 'cloud' or 'local'
+    cameraMode: 'mock', // Can be 'mock' or 'dslr'
+    selectedCameraId: undefined
 }
 
 export const useAppConfig = create<AppConfigState>()(

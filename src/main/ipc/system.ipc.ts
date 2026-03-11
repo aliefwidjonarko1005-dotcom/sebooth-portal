@@ -1,7 +1,8 @@
 import { IpcMain, dialog, app } from 'electron'
 import { join } from 'path'
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, rmSync } from 'fs'
+import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, rmSync, renameSync, readdirSync } from 'fs'
 import { APIResponse } from '@shared/types'
+// @ts-ignore - Ignore missing types for fluent-ffmpeg to prevent build failures
 import ffmpeg from 'fluent-ffmpeg'
 import ffmpegPath from '@ffmpeg-installer/ffmpeg'
 import { getLocalIpAddress } from '../server'
@@ -458,6 +459,67 @@ export function registerSystemHandlers(ipcMain: IpcMain): void {
         } catch (error) {
             const err = error as Error
             return { success: false, error: err.message, data: null }
+        }
+    })
+
+    // Rename session folder to include the email address
+    ipcMain.handle('system:rename-session-folder', async (_, params: {
+        sessionId: string
+        email: string
+    }): Promise<APIResponse<string>> => {
+        try {
+            const sessionsRoot = join(app.getPath('documents'), 'Sebooth', 'Sessions')
+            const oldFolder = join(sessionsRoot, `Session_${params.sessionId}`)
+
+            // Sanitize email for use in folder name (replace @ and . with safe chars)
+            const safeEmail = params.email.replace(/@/g, '_at_').replace(/[^a-zA-Z0-9._-]/g, '_')
+            const newFolderName = `Session_${safeEmail}_${params.sessionId}`
+            const newFolder = join(sessionsRoot, newFolderName)
+
+            if (existsSync(oldFolder) && !existsSync(newFolder)) {
+                renameSync(oldFolder, newFolder)
+                console.log(`Renamed session folder: ${newFolderName}`)
+            }
+
+            return { success: true, data: newFolderName }
+        } catch (error) {
+            const err = error as Error
+            return { success: false, error: err.message }
+        }
+    })
+
+    // Find strip file path from session folder (for printing)
+    ipcMain.handle('system:find-session-strip', async (_, sessionId: string): Promise<APIResponse<string>> => {
+        try {
+            const sessionsRoot = join(app.getPath('documents'), 'Sebooth', 'Sessions')
+            let sessionPath: string | null = null
+
+            // Try exact match first
+            const exactPath = join(sessionsRoot, `Session_${sessionId}`)
+            if (existsSync(exactPath)) {
+                sessionPath = exactPath
+            } else if (existsSync(sessionsRoot)) {
+                // Scan for folder ending with the sessionId
+                const folders = readdirSync(sessionsRoot)
+                const match = folders.find(f => f.startsWith('Session_') && f.endsWith(sessionId))
+                if (match) sessionPath = join(sessionsRoot, match)
+            }
+
+            if (!sessionPath) {
+                return { success: false, error: 'Session folder not found' }
+            }
+
+            // Find strip file
+            const files = readdirSync(sessionPath)
+            const stripFile = files.find(f => f.startsWith('strip_'))
+            if (!stripFile) {
+                return { success: false, error: 'Strip file not found in session folder' }
+            }
+
+            return { success: true, data: join(sessionPath, stripFile) }
+        } catch (error) {
+            const err = error as Error
+            return { success: false, error: err.message }
         }
     })
 }

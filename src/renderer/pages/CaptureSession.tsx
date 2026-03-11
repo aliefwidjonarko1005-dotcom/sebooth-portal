@@ -7,6 +7,30 @@ import styles from './CaptureSession.module.css'
 
 type CaptureState = 'idle' | 'countdown' | 'capturing' | 'preview'
 
+// Audio Context for beeps
+const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+const playBeep = (freq = 800, duration = 150, vol = 0.5) => {
+    try {
+        if (audioCtx.state === 'suspended') audioCtx.resume()
+        const oscillator = audioCtx.createOscillator()
+        const gainNode = audioCtx.createGain()
+        
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime)
+        
+        gainNode.gain.setValueAtTime(vol, audioCtx.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration / 1000)
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioCtx.destination)
+        
+        oscillator.start()
+        oscillator.stop(audioCtx.currentTime + duration / 1000)
+    } catch (e) {
+        console.warn('Audio play failed:', e)
+    }
+}
+
 function CaptureSession(): JSX.Element {
     const navigate = useNavigate()
     const { frames, activeFrame } = useFrameStore()
@@ -20,6 +44,7 @@ function CaptureSession(): JSX.Element {
     const [lastCapturedImage, setLastCapturedImage] = useState<string | null>(null)
     const [isLoadingCamera, setIsLoadingCamera] = useState(true)
     const [cameraError, setCameraError] = useState<string | null>(null)
+    const [isGalleryExpanded, setIsGalleryExpanded] = useState(false)
 
     const videoRef = useRef<HTMLVideoElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -61,12 +86,19 @@ function CaptureSession(): JSX.Element {
                     throw new Error('Camera API not supported in this browser')
                 }
 
+                const videoConstraints: MediaTrackConstraints = {
+                    width: { ideal: 1920, min: 640 },
+                    height: { ideal: 1080, min: 480 },
+                }
+
+                if (config.selectedCameraId) {
+                    videoConstraints.deviceId = { exact: config.selectedCameraId }
+                } else {
+                    videoConstraints.facingMode = 'user'
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: { ideal: 1920, min: 640 },
-                        height: { ideal: 1080, min: 480 },
-                        facingMode: 'user'
-                    }
+                    video: videoConstraints
                 })
                 streamRef.current = stream
                 if (videoRef.current) {
@@ -200,15 +232,22 @@ function CaptureSession(): JSX.Element {
             }
         }
 
-        countdownRef.current = setInterval(() => {
+        // Initial beep
+        playBeep(800, 150)
+
+        countdownRef.current = window.setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
                     if (countdownRef.current) {
                         clearInterval(countdownRef.current)
                     }
+                    // Capture beep (higher pitch, longer duration)
+                    playBeep(1200, 300)
                     triggerCapture(slotIndex)
                     return 0
                 }
+                // Standard countdown beep
+                playBeep(800, 150)
                 return prev - 1
             })
         }, 1000)
@@ -227,15 +266,17 @@ function CaptureSession(): JSX.Element {
             setTimeout(async () => {
                 let dataUrl: string | null = null;
 
-                // Attempt native DSLR capture first
+                // Attempt native DSLR capture first (skip for webcam/mock mode)
                 try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const windowApi = (window as any).api;
-                    if (windowApi && windowApi.camera && windowApi.camera.capture) {
-                        const captureRes = await windowApi.camera.capture(slot?.id);
-                        if (captureRes.success && captureRes.data && captureRes.data.imagePath) {
-                            // Convert physical path to local file URL
-                            dataUrl = `file:///${captureRes.data.imagePath.replace(/\\/g, '/')}`;
+                    if (config.cameraMode !== 'mock') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const windowApi = (window as any).api;
+                        if (windowApi && windowApi.camera && windowApi.camera.capture) {
+                            const captureRes = await windowApi.camera.capture(slot?.id);
+                            if (captureRes.success && captureRes.data && captureRes.data.imagePath) {
+                                // Convert physical path to local file URL
+                                dataUrl = `file:///${captureRes.data.imagePath.replace(/\\/g, '/')}`;
+                            }
                         }
                     }
                 } catch (e) {
@@ -492,74 +533,105 @@ function CaptureSession(): JSX.Element {
 
                 {/* Ready Button */}
                 {captureState === 'idle' && (
-                    <motion.button
-                        className={styles.readyButton}
-                        onClick={handleReady}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        📸 {allSlotsFilled ? 'Retake Photo' : 'Take Photo'}
-                    </motion.button>
+                    <div className={styles.readyButtonContainer}>
+                        <motion.button
+                            className={styles.readyButton}
+                            onClick={handleReady}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            📸 {allSlotsFilled ? 'Retake Photo' : 'Take Photo'}
+                        </motion.button>
+                    </div>
                 )}
             </div>
 
-            {/* Sidebar with Photo Slots - Only show non-duplicate slots */}
-            <aside className={styles.sidebar}>
-                <div className={styles.sidebarHeader}>
-                    <h3>Your Photos</h3>
-                    <span className={styles.photoProgress}>{photos.length}/{captureSlots.length}</span>
-                </div>
-
-                <div className={styles.slotGridWrapper}>
-                    <div className={styles.slotGrid}>
-                        {captureSlots.map((slot, sequentialIndex) => {
-                            const photo = photos.find(p => p.slotId === slot.id)
-                            // Find original index in currentFrame.slots for click handler
-                            const originalIndex = currentFrame.slots.findIndex(s => s.id === slot.id)
-                            const isCurrentSlot = currentSlotIndex === originalIndex && captureState !== 'idle'
-
-                            return (
-                                <motion.div
-                                    key={slot.id}
-                                    className={`${styles.slotThumbnail} ${photo ? styles.filled : ''} ${isCurrentSlot ? styles.active : ''}`}
-                                    onClick={() => handleSlotClick(originalIndex)}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    {photo ? (
-                                        <img
-                                            src={photo.imagePath}
-                                            alt={`Photo ${sequentialIndex + 1}`}
-                                        />
-                                    ) : (
-                                        <span className={styles.slotNumber}>{sequentialIndex + 1}</span>
-                                    )}
-                                    {photo && <span className={styles.retakeHint}>Tap to retake</span>}
-                                </motion.div>
-                            )
-                        })}
-                    </div>
-                </div>
-
-
-
-                {/* Done Button */}
-                <motion.button
-                    className={`${styles.doneButton} ${allSlotsFilled ? styles.ready : ''}`}
-                    onClick={handleDone}
-                    disabled={photos.length === 0}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+            {/* Floating Photo Gallery Overlay */}
+            <div className={`${styles.floatingGallery} ${isGalleryExpanded ? styles.expanded : ''}`}>
+                <div 
+                    className={styles.galleryToggle}
+                    onClick={() => setIsGalleryExpanded(!isGalleryExpanded)}
                 >
-                    {allSlotsFilled ? '✨ Continue to Edit' : `${photos.length}/${captureSlots.length} Photos`}
-                </motion.button>
-
-                {/* Connection Status */}
-                <div className={styles.connectionStatus}>
-                    <span className={`${styles.statusDot} ${isConnected ? styles.connected : ''}`} />
-                    {isConnected ? 'Camera Connected' : 'Using Webcam'}
+                    {/* Always show the last photo (or a placeholder) as the toggle icon */}
+                    {photos.length > 0 ? (
+                        <div className={styles.toggleThumbnail}>
+                            <img src={photos[photos.length - 1].imagePath} alt="Last Capture" />
+                            <span className={styles.photoCountBadge}>{photos.length}/{captureSlots.length}</span>
+                        </div>
+                    ) : (
+                        <div className={styles.toggleThumbnailEmpty}>
+                            📸 <span>{photos.length}/{captureSlots.length}</span>
+                        </div>
+                    )}
                 </div>
-            </aside>
+
+                <AnimatePresence>
+                    {isGalleryExpanded && (
+                        <motion.div 
+                            className={styles.galleryPanel}
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className={styles.sidebarHeader}>
+                                <h3>Your Photos</h3>
+                                <button 
+                                    className={styles.closeGalleryBtn} 
+                                    onClick={() => setIsGalleryExpanded(false)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className={styles.slotGridWrapper}>
+                                <div className={styles.slotGrid}>
+                                    {captureSlots.map((slot, sequentialIndex) => {
+                                        const photo = photos.find(p => p.slotId === slot.id)
+                                        const originalIndex = currentFrame.slots.findIndex(s => s.id === slot.id)
+                                        const isCurrentSlot = currentSlotIndex === originalIndex && captureState !== 'idle'
+            
+                                        return (
+                                            <motion.div
+                                                key={slot.id}
+                                                className={`${styles.slotThumbnail} ${photo ? styles.filled : ''} ${isCurrentSlot ? styles.active : ''}`}
+                                                onClick={() => {
+                                                    handleSlotClick(originalIndex)
+                                                    setIsGalleryExpanded(false) // Optionally auto-close when retaking
+                                                }}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                {photo ? (
+                                                    <img src={photo.imagePath} alt={`Photo ${sequentialIndex + 1}`} />
+                                                ) : (
+                                                    <span className={styles.slotNumber}>{sequentialIndex + 1}</span>
+                                                )}
+                                                {photo && <span className={styles.retakeHint}>Tap to retake</span>}
+                                            </motion.div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+            
+                            <motion.button
+                                className={`${styles.doneButton} ${allSlotsFilled ? styles.ready : ''}`}
+                                onClick={handleDone}
+                                disabled={photos.length === 0}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                {allSlotsFilled ? '✨ Continue to Edit' : `${photos.length}/${captureSlots.length} Photos`}
+                            </motion.button>
+
+                            <div className={styles.connectionStatus}>
+                                <span className={`${styles.statusDot} ${isConnected ? styles.connected : ''}`} />
+                                {isConnected ? 'Camera Connected' : 'Using Webcam'}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </motion.div>
     )
 }

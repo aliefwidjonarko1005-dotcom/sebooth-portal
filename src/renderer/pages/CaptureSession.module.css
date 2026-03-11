@@ -1,14 +1,15 @@
 .container {
-    width: 100%;
+    width: 100vw;
     height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    background: var(--color-bg-primary);
+    display: flex;
+    background: #000;
+    overflow: hidden;
+    position: relative;
 }
 
 /* No Frame State */
 .noFrame {
-    grid-column: 1 / -1;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -19,6 +20,7 @@
 
 .noFrame h2 {
     font-size: var(--font-size-2xl);
+    color: white;
 }
 
 .noFrame p {
@@ -33,53 +35,45 @@
     border-radius: var(--radius-lg);
 }
 
-/* Capture Area */
+/* Capture Area - Now full screen */
 .captureArea {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: var(--spacing-md);
     position: relative;
-    overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
 /* Controls Bar */
 .controlsBar {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-sm) 0;
-    margin-bottom: var(--spacing-sm);
-}
-
-.backBtn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-}
-
-.backBtn:hover {
-    color: var(--color-text-primary);
-    border-color: var(--color-border-hover);
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+    z-index: 10;
 }
 
 .frameName {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .photoCount {
-    font-size: var(--font-size-sm);
-    color: var(--color-accent);
-    background: var(--color-surface-active);
-    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-md);
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    padding: var(--spacing-sm) var(--spacing-lg);
     border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .controlsRight {
@@ -88,31 +82,25 @@
     gap: var(--spacing-sm);
 }
 
-.controlBtn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.controlBtn:hover {
-    color: var(--color-text-primary);
-    background: var(--color-surface-hover);
+/* Viewfinder */
+.viewfinderContainer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .viewfinder {
     position: relative;
     width: 100%;
+    height: 100%;
     max-width: 100%;
-    max-height: 85vh;
+    max-height: 100vh;
     background: #000;
-    border-radius: var(--radius-xl);
     overflow: hidden;
-    box-shadow: var(--shadow-xl);
 }
 
 .video {
@@ -173,36 +161,58 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-bg-primary);
+    background: rgba(0,0,0,0.8);
     z-index: 25;
 }
 
 .previewImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+
+.previewBadge {
+    position: absolute;
+    bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-full);
+    color: white;
+    font-weight: 600;
+    font-size: var(--font-size-lg);
 }
 
 .checkmark {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
     background: var(--color-success);
-    color: white;
     border-radius: 50%;
-    animation: pop 0.3s ease-out;
+    font-size: 16px;
+}
+
+/* Ready Button Container */
+.readyButtonContainer {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
 }
 
 /* Ready Button */
 .readyButton {
-    position: absolute;
-    bottom: var(--spacing-2xl);
     padding: var(--spacing-lg) var(--spacing-3xl);
     font-size: var(--font-size-2xl);
     font-weight: 700;
@@ -211,60 +221,135 @@
     border-radius: var(--radius-full);
     box-shadow: var(--shadow-glow);
     transition: box-shadow var(--transition-base);
-    z-index: 5;
 }
 
 .readyButton:hover {
     box-shadow: 0 0 60px var(--color-accent-glow);
 }
 
-/* Skip/Continue Button */
-.skipButton {
-    padding: var(--spacing-md) var(--spacing-xl);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border-radius: var(--radius-full);
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    transition: all var(--transition-base);
-}
-
-.skipButton:hover {
-    box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
-}
-
-/* Sidebar */
-.sidebar {
+/* Floating Gallery Overlay */
+.floatingGallery {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    right: var(--spacing-xl);
+    z-index: 40;
     display: flex;
     flex-direction: column;
-    background: var(--color-bg-secondary);
-    border-left: 1px solid var(--color-border);
-    height: 100vh;
+    align-items: flex-end;
+}
+
+.galleryToggle {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-xl);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 41;
+}
+
+.galleryToggle:hover {
+    transform: scale(1.05) translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+}
+
+.toggleThumbnail {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.toggleThumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photoCountBadge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(4px);
+}
+
+.toggleThumbnailEmpty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.toggleThumbnailEmpty span {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.galleryPanel {
+    position: absolute;
+    bottom: calc(100% + var(--spacing-sm));
+    right: 0;
+    width: 320px;
+    background: rgba(18, 18, 18, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+    max-height: 70vh;
 }
 
 .sidebarHeader {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--color-border);
-    flex-shrink: 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .sidebarHeader h3 {
-    font-size: var(--font-size-lg);
     margin: 0;
+    color: white;
+    font-size: var(--font-size-md);
+    font-weight: 600;
 }
 
-.photoProgress {
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    color: var(--color-accent);
-    background: var(--color-surface-active);
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-full);
+.closeGalleryBtn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.closeGalleryBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
 .slotGridWrapper {
@@ -275,16 +360,16 @@
 
 .slotGrid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
 }
 
 .slotThumbnail {
     position: relative;
     aspect-ratio: 4 / 3;
-    background: var(--color-bg-tertiary);
-    border: 2px dashed var(--color-border);
-    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -294,12 +379,14 @@
 }
 
 .slotThumbnail:hover {
-    border-color: var(--color-accent);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 .slotThumbnail.filled {
     border-style: solid;
-    border-color: var(--color-success);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .slotThumbnail.active {

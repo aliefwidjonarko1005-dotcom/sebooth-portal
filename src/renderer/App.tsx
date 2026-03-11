@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { useEffect } from 'react'
+import { useAppConfig } from './stores'
 import Landing from './pages/Landing'
 import AdminDashboard from './pages/AdminDashboard'
 import FrameSelection from './pages/FrameSelection'
@@ -9,9 +11,28 @@ import PostProcessing from './pages/PostProcessing'
 import GalleryPage from './pages/GalleryPage'
 
 function App(): JSX.Element {
+    const { config } = useAppConfig()
+
+    useEffect(() => {
+        const initCamera = async () => {
+            try {
+                const windowApi = (window as any).api;
+                if (config.cameraMode === 'mock') {
+                    await windowApi.camera.useMock()
+                } else if (config.cameraMode === 'ptp') {
+                    await windowApi.camera.useDirectPtp()
+                } else if (config.cameraMode === 'dslr') {
+                    await windowApi.camera.useReal()
+                }
+            } catch (err) {
+                console.error('Failed to initialize camera mode on startup:', err)
+            }
+        }
+        initCamera()
+    }, [config.cameraMode])
     const toggleFullScreen = async () => {
         try {
-            await window.api.window.toggleFullscreen()
+            await (window as any).api.window.toggleFullscreen()
         } catch (error) {
             console.error('Failed to toggle fullscreen:', error)
         }

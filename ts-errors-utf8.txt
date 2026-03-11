@@ -1,0 +1,99 @@
+﻿error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/CameraHandler.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/CameraHandler.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/DigiCamControlCamera.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/DigiCamControlCamera.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/MockCamera.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/MockCamera.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/PrinterHandler.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/handlers/PrinterHandler.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/index.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/index.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/camera.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/camera.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/drive.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/drive.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/email.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/email.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/image.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/image.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/printer.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/printer.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/system.ipc.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/ipc/system.ipc.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/server.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/server.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/services/ImageProcessor.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/main/services/ImageProcessor.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/App.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/App.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal/EmailModal.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal/EmailModal.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal/index.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/EmailModal/index.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/QRCodeModal/QRCodeModal.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/QRCodeModal/QRCodeModal.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/QRCodeModal/index.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/QRCodeModal/index.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/SessionTimer/SessionTimer.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/SessionTimer/SessionTimer.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/SessionTimer/index.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/components/SessionTimer/index.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/lib/email.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/lib/email.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/lib/supabase.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/lib/supabase.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/main.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/main.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/AdminDashboard.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/AdminDashboard.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/CaptureSession.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/CaptureSession.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/FrameSelection.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/FrameSelection.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/GalleryPage.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/GalleryPage.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/Landing.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/Landing.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/PaymentGateway.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/PaymentGateway.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/PostProcessing.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/pages/PostProcessing.tsx'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/stores/index.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/renderer/stores/index.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
+error TS6305: Output file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/shared/types.d.ts' has not been built from source file 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/src/shared/types.ts'.
+  The file is in the program because:
+    Matched by include pattern 'src/**/*' in 'C:/Users/AXIOO HYPE R5/Documents/2026/04_Sebooth/tsconfig.json'
