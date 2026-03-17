@@ -1,83 +1,112 @@
 /* =============================================
    SEBOOTH - GLOBAL STYLES
-   Premium Dark Theme Photobooth Application
+   Colorful Claymorphism v2
    ============================================= */
 
 :root {
-  /* Color Palette */
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-tertiary: #1a1a25;
-  --color-bg-elevated: #22222f;
-  
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-hover: rgba(255, 255, 255, 0.06);
-  --color-surface-active: rgba(255, 255, 255, 0.09);
-  
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.15);
-  
-  --color-text-primary: #ffffff;
-  --color-text-secondary: rgba(255, 255, 255, 0.7);
-  --color-text-tertiary: rgba(255, 255, 255, 0.4);
-  
-  /* Accent Colors */
-  --color-accent: #6366f1;
-  --color-accent-hover: #818cf8;
-  --color-accent-glow: rgba(99, 102, 241, 0.3);
-  
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-  --gradient-glow: radial-gradient(ellipse at center, var(--color-accent-glow) 0%, transparent 70%);
-  --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-  
+  /* Base backgrounds */
+  --color-bg-primary:   #F5F0EB;  /* Warm cream */
+  --color-bg-secondary: #EDE8E3;
+  --color-bg-tertiary:  #FFFFFF;
+  --clay-bg:            #FFFFFF;
+
+  --color-surface:        rgba(255, 255, 255, 0.85);
+  --color-surface-hover:  rgba(255, 255, 255, 0.95);
+  --color-surface-active: #EDE8E3;
+
+  --color-border:       rgba(0, 0, 0, 0.06);
+  --color-border-hover: rgba(0, 0, 0, 0.12);
+
+  /* Text */
+  --color-text-primary:   #1A1A2E;
+  --color-text-secondary: #4A5568;
+  --color-text-tertiary:  #A0AEC0;
+  --color-text-main:      #1A1A2E;
+  --color-text-inv:       #FFFFFF;
+
+  /* Semantic colors */
+  --color-accent:           #4F89F5;
+  --color-accent-hover:     #3A72E0;
+  --color-accent-glow:      rgba(79, 137, 245, 0.30);
+  --color-secondary-accent: #A78AE0;
+  --color-success:          #3EC18A;
+  --color-warning:          #F7C948;
+  --color-error:            #FF7C6E;
+
   /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
+  --font-family: 'Inter', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --font-size-xs:   0.75rem;
+  --font-size-sm:   0.875rem;
   --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  --font-size-5xl: 3rem;
-  --font-size-6xl: 4rem;
-  
+  --font-size-md:   1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-2xl:  1.5rem;
+  --font-size-3xl:  1.875rem;
+  --font-size-4xl:  2.25rem;
+  --font-size-5xl:  3rem;
+  --font-size-6xl:  4rem;
+
   /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  --spacing-xs:  0.25rem;
+  --spacing-sm:  0.5rem;
+  --spacing-md:  1rem;
+  --spacing-lg:  1.5rem;
+  --spacing-xl:  2rem;
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
-  
+
   /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --radius-sm:   0.75rem;
+  --radius-md:   1rem;
+  --radius-lg:   1.5rem;
+  --radius-xl:   2rem;
+  --radius-2xl:  2.5rem;
   --radius-full: 9999px;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 40px var(--color-accent-glow);
-  
+
+  /* ===================================================
+     COLORFUL CLAYMORPHISM v2 - CLEAN SHADOW SYSTEM
+     ONE layer shadow only. No inner shadows. No white.
+     Depth is created through COLOR, not shadow stacks.
+     =================================================== */
+
+  /* Vibrant palette */
+  --clay-green:  #3EC18A;
+  --clay-yellow: #F7C948;
+  --clay-blue:   #4F89F5;
+  --clay-purple: #A78AE0;
+  --clay-coral:  #FF7C6E;
+  --clay-orange: #FF9F4B;
+  --clay-cream:  #F5F0EB;
+  --clay-navy:   #1A1A2E;
+
+  /* Clean single-layer shadows */
+  --clay-shadow:    0 8px 28px rgba(0, 0, 0, 0.11);
+  --clay-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.14);
+  --clay-shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --clay-shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.18);
+
+  /* Colored shadows for vibrant buttons */
+  --clay-shadow-green:  0 8px 28px rgba(62,  193, 138, 0.40);
+  --clay-shadow-yellow: 0 8px 28px rgba(247, 201, 72,  0.44);
+  --clay-shadow-blue:   0 8px 28px rgba(79,  137, 245, 0.40);
+  --clay-shadow-coral:  0 8px 28px rgba(255, 124, 110, 0.40);
+  --clay-shadow-purple: 0 8px 28px rgba(167, 138, 224, 0.40);
+  --clay-shadow-orange: 0 8px 28px rgba(255, 159, 75,  0.40);
+
+  /* Legacy aliases for backward compatibility */
+  --clay-card:         var(--clay-shadow);
+  --clay-card-accent:  var(--clay-shadow-blue);
+  --clay-pressed:      inset 0 4px 14px rgba(0, 0, 0, 0.20);
+  --clay-shadow-outer: var(--clay-shadow);
+  --clay-shadow-inner: none;
+
   /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:   250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bouncy: 380ms cubic-bezier(0.47, 1.64, 0.41, 0.8);
+  --transition-spring: 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Reset & Base */
@@ -98,7 +127,7 @@ body {
   font-size: var(--font-size-base);
   line-height: 1.5;
   color: var(--color-text-primary);
-  background-color: var(--color-bg-primary);
+  background-color: var(--clay-cream);
   overflow: hidden;
   user-select: none;
   cursor: default;
@@ -112,7 +141,7 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -127,7 +156,6 @@ p {
   color: var(--color-text-secondary);
 }
 
-/* Links */
 a {
   color: var(--color-accent);
   text-decoration: none;
@@ -138,11 +166,11 @@ a:hover {
   color: var(--color-accent-hover);
 }
 
-/* Buttons */
+/* Buttons base */
 button {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   border: none;
   outline: none;
@@ -156,16 +184,17 @@ input, textarea, select {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
   padding: var(--spacing-sm) var(--spacing-md);
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-glow);
+  border-color: var(--clay-blue);
+  box-shadow: var(--clay-shadow-blue);
 }
 
 input::placeholder {
@@ -173,70 +202,114 @@ input::placeholder {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
-}
-
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bg-elevated);
+  background: rgba(0,0,0,0.15);
   border-radius: var(--radius-full);
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-hover);
+/* ==========================================
+   UTILITY CLASSES — Colorful Clay v2
+   ========================================== */
+
+/* White floating card (default) */
+.clay-panel {
+  background: #FFFFFF;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--clay-shadow);
+  transition: transform var(--transition-bouncy), box-shadow var(--transition-fast);
 }
 
-/* Utility Classes */
+.clay-panel:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--clay-shadow-lg);
+}
+
+/* White solid pill button */
+.clay-btn {
+  background: #FFFFFF;
+  border-radius: var(--radius-full);
+  box-shadow: var(--clay-shadow);
+  color: var(--color-text-main);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-weight: 800;
+  transition: transform var(--transition-bouncy), box-shadow var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.clay-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--clay-shadow-lg);
+}
+
+/* Accent pill button — blue */
+.clay-btn-accent {
+  background: var(--clay-blue);
+  color: #FFFFFF;
+  border-radius: var(--radius-full);
+  box-shadow: var(--clay-shadow-blue);
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-weight: 800;
+  transition: transform var(--transition-bouncy), box-shadow var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.clay-btn-accent:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.clay-btn:active, .clay-btn-accent:active {
+  transform: scale(0.92) translateY(2px);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+/* Gradient text utility */
 .gradient-text {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--clay-blue) 0%, var(--clay-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.glass {
-  background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-}
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
 
-.glow {
-  box-shadow: var(--shadow-glow);
-}
-
-/* Animations */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes countdown-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06) translateY(-4px); }
 }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
+  0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50%       { transform: translateY(-10px); }
 }
 
-@keyframes countdown-pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes soft-bounce-in {
+  0%   { transform: scale(0.85); opacity: 0; }
+  70%  { transform: scale(1.05); }
+  100% { transform: scale(1);    opacity: 1; }
 }
 
-.animate-pulse { animation: pulse 2s ease-in-out infinite; }
-.animate-spin { animation: spin 1s linear infinite; }
-.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse  { animation: pulse 2s ease-in-out infinite; }
+.animate-spin   { animation: spin 1s linear infinite; }
+.animate-float  { animation: float 3s ease-in-out infinite; }

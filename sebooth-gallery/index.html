@@ -301,6 +301,10 @@
 </head>
 
 <body>
+    <!-- LOUD DEBUG BANNER -->
+    <div style="background: red; color: white; padding: 10px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 9999;">
+        DATABASE TERHUBUNG - VERSI 2.0
+    </div>
     <div id="app">
         <div class="loading">
             <div class="spinner"></div>
@@ -318,39 +322,63 @@
 
     <script>
         // Supabase config - must match the app's .env values
-        const SUPABASE_URL = 'https://fyprcefevaxbpjmoafvf.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_ih9nA6KWttScgg26wQp9pw_-VZIgaGo';
+        const SUPABASE_URL = 'https://hfheuhivhwooaobgjtqv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmaGV1aGl2aHdvb2FvYmdqdHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MDM3MDMsImV4cCI6MjA4OTI3OTcwM30.rN_R3eyhYPZmpOa7r921Eoo5rAJMxlgcWkv0vwQZohc';
 
         // Parse URL parameters
         const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get('s'); // Short session ID param
+        let sessionId = params.get('s'); // ?s=ID
 
-        // Legacy params (for backward compatibility)
-        let strip = params.get('strip');
-        let live = params.get('live');
-        let photosParam = params.get('photos');
-        let photos = photosParam ? photosParam.split(',').filter(Boolean) : [];
-        let videoUrls = [];  // Video URLs for each slot
-        let frameData = null;  // Frame template data for Live Photo
+        // Support for path-based access (/access/ID)
+        if (!sessionId && window.location.pathname.includes('/access/')) {
+            const parts = window.location.pathname.split('/');
+            sessionId = parts[parts.indexOf('access') + 1];
+        }
+
+        let strip = null;
+        let live = null;
+        let photos = [];
+        let videoUrls = [];
+        let frameData = null;
 
         // Main initialization
         async function init() {
-            // If session ID provided, fetch from Supabase
             if (sessionId) {
                 try {
                     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    const { data, error } = await supabase
-                        .from('session_galleries')
+                    
+                    // 1. Fetch the session info
+                    const { data: sessionData, error: sessionError } = await supabase
+                        .from('sessions')
                         .select('*')
-                        .eq('session_id', sessionId)
+                        .eq('id', sessionId)
                         .single();
 
-                    if (data && !error) {
-                        strip = data.photo_strip_url;
-                        live = data.live_photo_url;
-                        photos = data.photo_urls || [];
-                        videoUrls = data.video_urls || [];
-                        frameData = data.frame_data || null;
+                    if (sessionError) throw sessionError;
+
+                    // 2. Fetch the media associated with this session
+                    const { data: mediaData, error: mediaError } = await supabase
+                        .from('media')
+                        .select('*')
+                        .eq('session_id', sessionId);
+
+                    if (mediaError) throw mediaError;
+
+                    if (mediaData && mediaData.length > 0) {
+                        // Map media types
+                        const stripItem = mediaData.find(m => m.type === 'strip');
+                        const gifItem = mediaData.find(m => m.type === 'gif');
+                        const videoItem = mediaData.find(m => m.type === 'video');
+                        const captureItems = mediaData.filter(m => m.type === 'capture' || m.type === 'photo');
+
+                        strip = stripItem ? stripItem.url : null;
+                        live = videoItem ? videoItem.url : (gifItem ? gifItem.url : null);
+                        photos = captureItems.map(m => m.url);
+                        
+                        // If no captures but we have a strip, maybe use strip as photo?
+                        // But usually 'capture' is what we want for the grid.
+                        
+                        // Handle cases where GIF is 'live' or Video is 'live'
                     }
                 } catch (err) {
                     console.error('Failed to fetch gallery:', err);
@@ -364,6 +392,7 @@
                         <span>📷</span>
                         <h2>Gallery Not Found</h2>
                         <p>This gallery link may be invalid or expired.</p>
+                        <p style="font-size: 12px; margin-top: 10px; color: rgba(255,255,255,0.3)">Session ID: ${sessionId || 'None'}</p>
                     </div>
                     <footer class="footer">Powered by Sebooth</footer>
                 `;

@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useCameraStore, useFrameStore, useAppConfig } from '../stores'
 import styles from './Landing.module.css'
 
-const ADMIN_PASSWORD = 'admin123' // Should be configurable
+// Placeholder illustration — swap with user's image once provided
+const ILLUSTRATION_SRC = './assets/landing-illustration.mp4'
+
+const ADMIN_PASSWORD = 'admin123'
 
 function Landing(): JSX.Element {
     const navigate = useNavigate()
@@ -18,8 +21,10 @@ function Landing(): JSX.Element {
     const [isLoading, setIsLoading] = useState(false)
     const [holdProgress, setHoldProgress] = useState(0)
     const [holdTimer, setHoldTimer] = useState<NodeJS.Timeout | null>(null)
+    const [showCameraMenu, setShowCameraMenu] = useState(false)
+    const [illustrationError, setIllustrationError] = useState(false)
 
-    // Fetch cameras on mount
+    // Check if video exists (simple check via extension or just try loading)
     useEffect(() => {
         const fetchCameras = async (): Promise<void> => {
             try {
@@ -34,11 +39,9 @@ function Landing(): JSX.Element {
                 console.error('Failed to fetch cameras:', error)
             }
         }
-
         fetchCameras()
     }, [setCameras, selectCamera, selectedCamera])
 
-    // Handle long press for admin access
     const handleAdminHoldStart = useCallback(() => {
         const timer = setInterval(() => {
             setHoldProgress(prev => {
@@ -54,48 +57,32 @@ function Landing(): JSX.Element {
     }, [])
 
     const handleAdminHoldEnd = useCallback(() => {
-        if (holdTimer) {
-            clearInterval(holdTimer)
-            setHoldTimer(null)
-        }
+        if (holdTimer) { clearInterval(holdTimer); setHoldTimer(null) }
         setHoldProgress(0)
     }, [holdTimer])
 
-    // Handle camera selection
-    const handleCameraSelect = async (e: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
-        const cameraId = e.target.value
+    const handleCameraSelect = async (cameraId: string): Promise<void> => {
         const camera = cameras.find(c => c.id === cameraId)
         if (camera) {
             selectCamera(camera)
-
-            // Try to connect
             const result = await window.api.camera.connect(cameraId)
             setConnected(result.success && result.data === true)
+            setShowCameraMenu(false)
         }
     }
 
-    // Handle start button
     const handleStart = async (): Promise<void> => {
         setIsLoading(true)
-
         try {
-            // Connect to camera if not connected
             if (!isConnected && selectedCamera) {
                 const result = await window.api.camera.connect(selectedCamera.id)
-                if (!result.success) {
-                    console.error('Failed to connect to camera:', result.error)
-                }
                 setConnected(result.success && result.data === true)
             }
-
-            // Set active frame
             if (config.activeFrameId) {
                 setActiveFrame(config.activeFrameId)
             } else if (frames.length > 0) {
                 setActiveFrame(frames[0].id)
             }
-
-            // Navigate to frame selection
             navigate('/frames')
         } catch (error) {
             console.error('Failed to start session:', error)
@@ -104,7 +91,6 @@ function Landing(): JSX.Element {
         }
     }
 
-    // Handle admin login
     const handleAdminSubmit = (e: React.FormEvent): void => {
         e.preventDefault()
         if (adminPassword === ADMIN_PASSWORD) {
@@ -124,121 +110,159 @@ function Landing(): JSX.Element {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
         >
-            {/* Background Effects */}
-            <div className={styles.backgroundGlow} />
-            <div className={styles.backgroundGrid} />
-
-            {/* Logo/Branding */}
-            <motion.div
-                className={styles.branding}
-                initial={{ y: -30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-            >
-                <h1 className={styles.logo}>
-                    <span className="gradient-text">Sebooth</span>
-                </h1>
-                <p className={styles.tagline}>Premium Photobooth Experience</p>
-            </motion.div>
-
-            {/* Main Content */}
-            <motion.div
-                className={styles.mainContent}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.4, type: 'spring' }}
-            >
-                {/* Camera Selection */}
-                <div className={styles.cameraSection}>
-                    <label className={styles.label}>Select Camera</label>
-                    <select
-                        className={styles.select}
-                        value={selectedCamera?.id || ''}
-                        onChange={handleCameraSelect}
-                    >
-                        <option value="">-- Select Camera --</option>
-                        {cameras.map(camera => (
-                            <option key={camera.id} value={camera.id}>
-                                {camera.name}
-                            </option>
-                        ))}
-                    </select>
-
-                    {selectedCamera && (
-                        <div className={styles.cameraStatus}>
-                            <span className={`${styles.statusDot} ${isConnected ? styles.connected : ''}`} />
-                            {isConnected ? 'Connected' : 'Not Connected'}
-                        </div>
-                    )}
+            {/* ── TOP NAV ── */}
+            <header className={styles.navbar}>
+                {/* Logo */}
+                <div className={styles.navLogo}>
+                    <img src="./assets/icons/icon-camera.png" alt="Sebooth" className={styles.navLogoIcon} />
+                    <span className={styles.navLogoText}>Sebooth</span>
                 </div>
 
-                {/* Start Button */}
-                <motion.button
-                    className={styles.startButton}
-                    onClick={handleStart}
-                    disabled={isLoading}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                {/* Right side: camera selector + admin trigger */}
+                <div className={styles.navRight}>
+                    {/* Camera Picker */}
+                    <div className={styles.cameraPicker}>
+                        <button
+                            className={styles.cameraPickerBtn}
+                            onClick={() => setShowCameraMenu(v => !v)}
+                        >
+                            <span className={`${styles.statusDot} ${isConnected ? styles.connected : ''}`} />
+                            <span>{selectedCamera?.name ?? 'Select Camera'}</span>
+                            <span className={styles.chevron}>{showCameraMenu ? '▲' : '▼'}</span>
+                        </button>
+
+                        <AnimatePresence>
+                            {showCameraMenu && (
+                                <motion.div
+                                    className={styles.cameraDropdown}
+                                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                                    transition={{ duration: 0.15 }}
+                                >
+                                    {cameras.length === 0 && (
+                                        <div className={styles.dropdownEmpty}>No cameras found</div>
+                                    )}
+                                    {cameras.map(cam => (
+                                        <button
+                                            key={cam.id}
+                                            className={`${styles.dropdownItem} ${selectedCamera?.id === cam.id ? styles.activeItem : ''}`}
+                                            onClick={() => handleCameraSelect(cam.id)}
+                                        >
+                                            {cam.name}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Hidden admin long-press trigger */}
+                    <div
+                        className={styles.adminTrigger}
+                        onMouseDown={handleAdminHoldStart}
+                        onMouseUp={handleAdminHoldEnd}
+                        onMouseLeave={handleAdminHoldEnd}
+                        onTouchStart={handleAdminHoldStart}
+                        onTouchEnd={handleAdminHoldEnd}
+                        title="Admin"
+                    >
+                        <div className={styles.adminProgress} style={{ width: `${holdProgress}%` }} />
+                        <span className={styles.adminGear}>⚙</span>
+                    </div>
+                </div>
+            </header>
+
+            {/* ── HERO TEXT ── */}
+            <section className={styles.hero}>
+                <motion.h1
+                    className={styles.headline}
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.15, type: 'spring', stiffness: 100 }}
                 >
-                    {isLoading ? (
-                        <span className={styles.loader} />
-                    ) : (
-                        <>
-                            <span className={styles.startIcon}>📸</span>
-                            <span>Start</span>
-                        </>
-                    )}
-                </motion.button>
+                    Abadikan Momen,<br />
+                    <span className={styles.headlineAccent}>Ciptakan Kenangan.</span>
+                </motion.h1>
+            </section>
+
+            {/* Absolute Centered Start Button */}
+            <motion.button
+                className={styles.ctaPrimary}
+                onClick={handleStart}
+                disabled={isLoading}
+                initial={{ opacity: 0, scale: 0.8, x: '-50%', y: '-50%' }}
+                animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+                transition={{ delay: 0.45, type: 'spring', stiffness: 100 }}
+            >
+                {isLoading
+                    ? <span className={styles.loader} />
+                    : <> Mulai Sesi Foto &nbsp;→</>
+                }
+            </motion.button>
+
+            {/* ── ILLUSTRATION (VIDEO) ── */}
+            <motion.div
+                className={styles.illustrationWrap}
+                initial={{ y: 60, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, type: 'spring', stiffness: 70, damping: 18 }}
+            >
+                {!illustrationError ? (
+                    <video
+                        src={ILLUSTRATION_SRC}
+                        className={styles.illustration}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        onError={() => setIllustrationError(true)}
+                    />
+                ) : (
+                    /* Placeholder shown until user provides video */
+                    <div className={styles.illustrationPlaceholder}>
+                        <span style={{ fontSize: 120, lineHeight: 1 }}>🎬</span>
+                        <p>Letakkan video ilustrasi Anda di<br />
+                            <code>src/renderer/assets/landing-illustration.mp4</code>
+                        </p>
+                    </div>
+                )}
             </motion.div>
 
-            {/* Admin Access (Hidden - Long Press) */}
-            <div
-                className={styles.adminTrigger}
-                onMouseDown={handleAdminHoldStart}
-                onMouseUp={handleAdminHoldEnd}
-                onMouseLeave={handleAdminHoldEnd}
-                onTouchStart={handleAdminHoldStart}
-                onTouchEnd={handleAdminHoldEnd}
-            >
-                <div
-                    className={styles.adminProgress}
-                    style={{ width: `${holdProgress}%` }}
-                />
-            </div>
-
-            {/* Admin Modal */}
-            {showAdminModal && (
-                <motion.div
-                    className={styles.modalOverlay}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    onClick={() => setShowAdminModal(false)}
-                >
+            {/* ── ADMIN MODAL ── */}
+            <AnimatePresence>
+                {showAdminModal && (
                     <motion.div
-                        className={styles.modal}
-                        initial={{ scale: 0.9, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        onClick={e => e.stopPropagation()}
+                        className={styles.modalOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowAdminModal(false)}
                     >
-                        <h3>Admin Access</h3>
-                        <form onSubmit={handleAdminSubmit}>
-                            <input
-                                type="password"
-                                placeholder="Enter password"
-                                value={adminPassword}
-                                onChange={e => setAdminPassword(e.target.value)}
-                                className={`${styles.passwordInput} ${passwordError ? styles.error : ''}`}
-                                autoFocus
-                            />
-                            <button type="submit" className={styles.submitButton}>
-                                Enter
-                            </button>
-                        </form>
+                        <motion.div
+                            className={styles.modal}
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3>Admin Access</h3>
+                            <form onSubmit={handleAdminSubmit}>
+                                <input
+                                    type="password"
+                                    placeholder="Enter password"
+                                    value={adminPassword}
+                                    onChange={e => setAdminPassword(e.target.value)}
+                                    className={`${styles.passwordInput} ${passwordError ? styles.error : ''}`}
+                                    autoFocus
+                                />
+                                <button type="submit" className={styles.submitButton}>Enter</button>
+                            </form>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
-            )}
+                )}
+            </AnimatePresence>
 
-            {/* Version */}
             <div className={styles.version}>v1.0.0</div>
         </motion.div>
     )

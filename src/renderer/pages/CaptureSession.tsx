@@ -385,7 +385,7 @@ function CaptureSession(): JSX.Element {
 
     // Navigate to processing
     const handleDone = (): void => {
-        navigate('/processing')
+        navigate('/review')
     }
 
     if (!currentFrame) {
@@ -413,7 +413,7 @@ function CaptureSession(): JSX.Element {
             {/* Session Timer Overlay */}
             <SessionTimer
                 duration={config.captureTimeout}
-                onTimeout={() => navigate('/processing')}
+                onTimeout={() => navigate('/review')}
                 enabled={config.sessionTimerEnabled}
                 label="Capture Session"
             />

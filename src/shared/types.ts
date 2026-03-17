@@ -63,6 +63,11 @@ export interface CapturedPhoto {
     timestamp: number
     filter?: string
     videoPath?: string  // 5-second video before capture for Live Photo
+    
+    // Review Session Adjustments
+    scale?: number
+    panX?: number
+    panY?: number
 }
 
 export interface SessionData {

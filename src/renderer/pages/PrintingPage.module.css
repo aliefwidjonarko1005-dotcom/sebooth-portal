@@ -1,0 +1,101 @@
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--clay-yellow); /* Amber yellow — festive */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative circle top right */
+.container::before {
+    content: '';
+    position: absolute;
+    width: 60vw;
+    height: 60vw;
+    top: -25%;
+    right: -20%;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.videoBackground {
+    position: absolute;
+    top: 50%; left: 50%;
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
+    z-index: 1;
+    transform: translateX(-50%) translateY(-50%);
+    object-fit: cover;
+    opacity: 0.15;
+}
+
+.overlay { display: none; }
+
+/* Floating white content card */
+.content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #1A1A2E;
+    background: #FFFFFF;
+    padding: var(--spacing-3xl);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--clay-shadow-xl);
+    min-width: 360px;
+}
+
+.title {
+    font-size: 52px;
+    font-weight: 900;
+    margin-bottom: var(--spacing-md);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #1A1A2E;
+}
+
+@keyframes soft-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+.title { animation: soft-pulse 2.2s ease-in-out infinite; }
+
+.subtitle {
+    font-size: var(--font-size-xl);
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    margin-top: var(--spacing-sm);
+}
+
+/* Blue loading spinner */
+.loadingSpinner {
+    margin-top: var(--spacing-2xl);
+    width: 72px;
+    height: 72px;
+    border: 7px solid var(--clay-cream);
+    border-top-color: var(--clay-blue);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    box-shadow: var(--clay-shadow-blue);
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.errorMessage {
+    position: absolute;
+    top: 40px;
+    background: var(--clay-coral);
+    color: #FFFFFF;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-full);
+    z-index: 100;
+    font-weight: 800;
+    box-shadow: var(--clay-shadow-coral);
+}

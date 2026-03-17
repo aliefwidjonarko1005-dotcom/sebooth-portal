@@ -3,7 +3,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--color-bg-primary);
+    background: var(--clay-cream);
 }
 
 .header {
@@ -11,34 +11,36 @@
     align-items: center;
     gap: var(--spacing-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
-    background: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-border);
+    background: transparent;
+    z-index: 10;
 }
 
 .header h1 {
     font-size: var(--font-size-2xl);
-    font-weight: 600;
+    font-weight: 900;
+    color: var(--color-text-main);
 }
 
+/* Red coral pill back button */
 .backButton {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    font-weight: 800;
+    color: #FFFFFF;
+    background: var(--clay-coral);
+    border: none;
+    border-radius: var(--radius-full);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    box-shadow: var(--clay-shadow-coral);
+    transition: all var(--transition-bouncy);
 }
 
-.backButton:hover {
-    color: var(--color-text-primary);
-    border-color: var(--color-border-hover);
-}
+.backButton:hover { transform: translateY(-4px) scale(1.03); }
+.backButton:active { transform: scale(0.92) translateY(2px); box-shadow: var(--clay-shadow-sm); }
 
 .content {
     flex: 1;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-xl);
     overflow-y: auto;
 }
 
@@ -53,56 +55,69 @@
     gap: var(--spacing-md);
 }
 
-.emptyIcon {
-    font-size: 80px;
-    margin-bottom: var(--spacing-md);
-}
+.emptyIcon { font-size: 80px; margin-bottom: var(--spacing-md); }
 
 .emptyState h2 {
     font-size: var(--font-size-2xl);
-    color: var(--color-text-primary);
+    color: var(--color-text-main);
+    font-weight: 900;
 }
 
-.emptyState p {
-    color: var(--color-text-tertiary);
-}
+.emptyState p { color: var(--color-text-secondary); }
 
 .adminButton {
     margin-top: var(--spacing-lg);
     padding: var(--spacing-md) var(--spacing-xl);
-    font-weight: 600;
-    color: white;
-    background: var(--gradient-primary);
-    border-radius: var(--radius-lg);
+    font-weight: 900;
+    color: #1A1A2E;
+    background: var(--clay-yellow);
+    border: none;
+    border-radius: var(--radius-full);
+    box-shadow: var(--clay-shadow-yellow);
+    cursor: pointer;
+    transition: all var(--transition-bouncy);
 }
+
+.adminButton:hover { transform: translateY(-4px) scale(1.03); }
+.adminButton:active { transform: scale(0.92); box-shadow: var(--clay-shadow-sm); }
 
 /* Frame Grid */
 .frameGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: var(--spacing-xl);
     max-width: 1400px;
     margin: 0 auto;
+    padding: var(--spacing-md);
 }
 
+/* Vibrant color palette cycling for cards */
 .frameCard {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
+    background: #FFFFFF;
+    border: none;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
     cursor: pointer;
-    transition: all var(--transition-base);
+    box-shadow: var(--clay-shadow);
+    transition: all var(--transition-bouncy);
+    padding: var(--spacing-md);
 }
 
 .frameCard:hover {
-    border-color: var(--color-accent);
-    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: var(--clay-shadow-lg);
+}
+
+.frameCard:active {
+    transform: scale(0.93) translateY(3px);
+    box-shadow: var(--clay-shadow-sm);
 }
 
 .framePreview {
     position: relative;
     width: 100%;
-    background: var(--color-bg-tertiary);
+    background: var(--clay-cream);
+    border-radius: var(--radius-xl);
     overflow: hidden;
 }
 
@@ -123,28 +138,30 @@
     justify-content: center;
     transform-origin: center center;
     z-index: 5;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-md);
 }
 
 .slotNumber {
     color: white;
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    font-size: var(--font-size-xl);
+    font-weight: 900;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 .frameInfo {
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-sm);
     text-align: center;
 }
 
 .frameInfo h3 {
     font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-weight: 900;
+    color: var(--color-text-main);
     margin-bottom: var(--spacing-xs);
 }
 
 .frameInfo span {
     font-size: var(--font-size-sm);
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
+    font-weight: 700;
 }

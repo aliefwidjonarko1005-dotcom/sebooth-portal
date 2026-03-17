@@ -244,8 +244,12 @@ interface SessionState {
     addPhoto: (slotId: string, imagePath: string, videoPath?: string) => void
     updatePhoto: (slotId: string, updates: Partial<CapturedPhoto>) => void
     removePhoto: (slotId: string) => void
+    swapPhotos: (slotIdA: string, slotIdB: string) => void
     setCompositePath: (path: string) => void
+    compositePath?: string
     setEmail: (email: string) => void
+    selectedFilter: string
+    setSessionFilter: (filterId: string) => void
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -289,6 +293,21 @@ export const useSessionStore = create<SessionState>((set) => ({
         photos: state.photos.filter(p => p.slotId !== slotId)
     })),
 
+    swapPhotos: (slotIdA, slotIdB) => set((state) => {
+        const photoA = state.photos.find(p => p.slotId === slotIdA)
+        const photoB = state.photos.find(p => p.slotId === slotIdB)
+        
+        if (!photoA || !photoB) return { photos: state.photos }
+        
+        return {
+            photos: state.photos.map(p => {
+                if (p.slotId === slotIdA) return { ...p, slotId: slotIdB, panX: 0, panY: 0, scale: 1 }
+                if (p.slotId === slotIdB) return { ...p, slotId: slotIdA, panX: 0, panY: 0, scale: 1 }
+                return p
+            })
+        }
+    }),
+
     setCompositePath: (path) => set((state) => ({
         currentSession: state.currentSession
             ? { ...state.currentSession, compositePath: path }
@@ -299,7 +318,13 @@ export const useSessionStore = create<SessionState>((set) => ({
         currentSession: state.currentSession
             ? { ...state.currentSession, email }
             : null
-    }))
+    })),
+
+    selectedFilter: 'none',
+
+    setSessionFilter: (filterId) => set({
+        selectedFilter: filterId
+    })
 }))
 
 // ================================
