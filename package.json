@@ -1,0 +1,9 @@
+{
+    "name": "sebooth-gallery",
+    "version": "1.0.0",
+    "description": "Static gallery page for Sebooth QR codes",
+    "scripts": {
+        "dev": "npx serve .",
+        "build": "echo 'No build needed - static HTML'"
+    }
+}
