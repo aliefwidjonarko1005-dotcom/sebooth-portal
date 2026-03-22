@@ -20,7 +20,7 @@ function Landing(): JSX.Element {
     const [passwordError, setPasswordError] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [holdProgress, setHoldProgress] = useState(0)
-    const [holdTimer, setHoldTimer] = useState<NodeJS.Timeout | null>(null)
+    const [holdTimer, setHoldTimer] = useState<any | null>(null)
     const [showCameraMenu, setShowCameraMenu] = useState(false)
     const [illustrationError, setIllustrationError] = useState(false)
 

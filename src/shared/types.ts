@@ -77,6 +77,14 @@ export interface SessionData {
     email?: string
     createdAt: number
     compositePath?: string
+    cloudSessionId?: string
+}
+
+export interface SetupConfig {
+    supabaseUrl: string
+    supabaseAnonKey: string
+    driveFolderId?: string
+    emailService?: string
 }
 
 // Config Types
@@ -111,8 +119,11 @@ export interface AppConfig {
 
     // Sharing
     sharingMode: 'cloud' | 'local' // Cloud (Drive/Supabase) or Local WiFi (DSLRBooth mode)
+    cloudPortalUrl: string
     wifiSsid?: string
     wifiPassword?: string
+    eventName?: string
+    activeFrameId?: string // Legacy support
 }
 
 export interface LUTFilter {

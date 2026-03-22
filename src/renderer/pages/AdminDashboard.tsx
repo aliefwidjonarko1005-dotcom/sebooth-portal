@@ -1162,6 +1162,19 @@ function AdminDashboard(): JSX.Element {
                                     <div>
                                         <div style={{ fontWeight: 'bold', fontSize: '16px' }}>☁️ Cloud Server (Supabase/Google Drive)</div>
                                         <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Guests need internet access to download files. QR code points to an online web gallery.</div>
+                                        {(config.sharingMode === 'cloud' || !config.sharingMode) && (
+                                            <div style={{ marginTop: '12px' }}>
+                                                <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Cloud Portal Base URL (e.g. https://sebooth.app)</label>
+                                                <input
+                                                    type="url"
+                                                    value={config.cloudPortalUrl || ''}
+                                                    onChange={(e) => updateConfig({ cloudPortalUrl: e.target.value })}
+                                                    placeholder="https://your-domain.vercel.app"
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px' }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </label>
 

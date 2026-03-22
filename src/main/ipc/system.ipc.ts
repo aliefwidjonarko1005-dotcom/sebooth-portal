@@ -378,6 +378,7 @@ export function registerSystemHandlers(ipcMain: IpcMain): void {
                                 .outputOptions('-preset veryfast')
                                 .outputOptions('-crf 28')
                                 .outputOptions('-pix_fmt yuv420p')
+                                .outputOptions('-movflags +faststart')
                                 .outputOptions('-t 5') // Fallback safety limit (5s max)
                                 .output(destPath)
                                 .on('end', () => {

@@ -227,6 +227,13 @@
     font-size: var(--font-size-xl);
     font-weight: 900;
     letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.statusSubtext {
+    color: rgba(255,255,255,0.8);
+    font-size: 16px !important;
+    font-weight: 500 !important;
 }
 
 .errorMessage {

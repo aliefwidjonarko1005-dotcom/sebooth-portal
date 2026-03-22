@@ -45,6 +45,7 @@ const defaultConfig: AppConfig = {
     paymentInstructions: 'Scan QR code dengan aplikasi e-wallet atau mobile banking Anda. Pembayaran akan terkonfirmasi otomatis.',
     paymentTimeout: 300, // 5 minutes
     sharingMode: 'cloud', // Can be 'cloud' or 'local'
+    cloudPortalUrl: '',
     cameraMode: 'mock', // Can be 'mock' or 'dslr'
     selectedCameraId: undefined
 }
@@ -248,6 +249,7 @@ interface SessionState {
     setCompositePath: (path: string) => void
     compositePath?: string
     setEmail: (email: string) => void
+    setCloudSessionId: (id: string) => void
     selectedFilter: string
     setSessionFilter: (filterId: string) => void
 }
@@ -317,6 +319,12 @@ export const useSessionStore = create<SessionState>((set) => ({
     setEmail: (email) => set((state) => ({
         currentSession: state.currentSession
             ? { ...state.currentSession, email }
+            : null
+    })),
+
+    setCloudSessionId: (id) => set((state) => ({
+        currentSession: state.currentSession
+            ? { ...state.currentSession, cloudSessionId: id }
             : null
     })),
 

@@ -102,7 +102,7 @@ const api = {
             frameConfig?: {
                 width: number
                 height: number
-                slots: { width: number; height: number; x: number; y: number }[]
+                slots: { width: number; height: number; x: number; y: number; rotation?: number }[]
             }
         }): Promise<APIResponse<{ path: string; filename: string; mimeType: string }[]>> =>
             ipcRenderer.invoke('system:save-session-locally', params),

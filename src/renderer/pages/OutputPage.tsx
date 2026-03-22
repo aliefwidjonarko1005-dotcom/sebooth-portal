@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFrameStore, useSessionStore, useFilterStore, useAppConfig } from '../stores'
 import styles from './OutputPage.module.css'
+import { supabase } from '../lib/supabase'
 
 function OutputPage(): JSX.Element {
     const navigate = useNavigate()
@@ -25,8 +26,12 @@ function OutputPage(): JSX.Element {
     const [compositeDataUrl, setCompositeDataUrl] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [isProcessing, setIsProcessing] = useState(true)
+    const [isUploading, setIsUploading] = useState(false)
+    const [uploadStatus, setUploadStatus] = useState<string>('')
+    const { setCloudSessionId } = useSessionStore()
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const uploadLockRef = useRef<string | null>(null)
 
     // Track viewed media
     useEffect(() => {
@@ -48,8 +53,255 @@ function OutputPage(): JSX.Element {
             await generateCompositeFromPhotos()
             await generateGif()
             extractLiveVideo()
+            // Cloud Upload will be triggered via useEffect when all media ready
         } finally {
             setIsProcessing(false)
+        }
+    }
+
+    // New: Trigger upload when processing is done and composite is ready
+    useEffect(() => {
+        if (!isProcessing && compositeDataUrl && config.sharingMode === 'cloud') {
+            handleCloudUpload()
+        }
+    }, [isProcessing, compositeDataUrl, config.sharingMode])
+    
+    // We remove the strict requirement for gif and video to avoid blocking upload if those fail
+    // They will be uploaded if they eventually arrive while handleCloudUpload is running or in a retry
+
+    const handleCloudUpload = async () => {
+        const sessionId = currentSession?.id
+        if (!sessionId || isUploading || uploadLockRef.current === sessionId) return
+        
+        setIsUploading(true)
+        uploadLockRef.current = sessionId
+        setUploadStatus('Memulai upload ke Cloud...')
+
+        try {
+            const sessionId = currentSession?.id || crypto.randomUUID()
+            
+            // Helper to convert base64 to blob (handles both with and without data URL prefix)
+            const base64ToBlob = (base64: string, defaultMime: string) => {
+                let mime = defaultMime
+                let bstr: string
+                
+                if (base64.startsWith('data:')) {
+                    const arr = base64.split(',')
+                    mime = arr[0].match(/:(.*?);/)![1]
+                    bstr = atob(arr[1])
+                } else {
+                    bstr = atob(base64)
+                }
+                
+                let n = bstr.length
+                const u8arr = new Uint8Array(n)
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n)
+                }
+                return new Blob([u8arr], { type: mime })
+            }
+
+            const mediaToUpload: { type: string; url?: string; path: string; blob?: Blob | File }[] = []
+
+            // 1. Prepare Strip
+            if (compositeDataUrl) {
+                try {
+                    const stripBlob = base64ToBlob(compositeDataUrl, 'image/jpeg')
+                    mediaToUpload.push({ type: 'photo', path: `${sessionId}/strip.jpg`, blob: stripBlob, label: 'Photo Strip' } as any)
+                } catch (e) { console.error('Strip blob conversion failed', e) }
+            }
+
+            // 2. Prepare GIF
+            if (gifDataUrl) {
+                try {
+                    const gifBlob = base64ToBlob(gifDataUrl, 'image/gif')
+                    mediaToUpload.push({ type: 'gif', path: `${sessionId}/animation.gif`, blob: gifBlob, label: 'GIF Animation' } as any)
+                } catch (e) { console.error('GIF blob conversion failed', e) }
+            }
+
+            // 0. Trigger Local Save (This generates the composite video via FFmpeg)
+            let composedVideoPath: string | null = null
+            if (sessionFrame) {
+                try {
+                    setUploadStatus('Memproses komposisi video Live...')
+                    const photosForSave = sessionFrame.slots.map((slot, i) => {
+                        const targetId = slot.duplicateOfSlotId || slot.id
+                        const photo = photos.find(p => p.slotId === targetId)
+                        return { 
+                            path: photo?.imagePath || '', 
+                            filename: `photo_${i + 1}.jpg` 
+                        }
+                    })
+
+                    const videosForSave = sessionFrame.slots.map((slot, i) => {
+                        const targetId = slot.duplicateOfSlotId || slot.id
+                        const photo = photos.find(p => p.slotId === targetId)
+                        return { 
+                            path: photo?.videoPath || '', 
+                            filename: `video_${i + 1}.mp4` 
+                        }
+                    })
+
+                    const saveResult = await window.api.system.saveSessionLocally({
+                        sessionId,
+                        stripDataUrl: compositeDataUrl || undefined,
+                        gifDataUrl: gifDataUrl || undefined,
+                        photos: photosForSave,
+                        videos: videosForSave,
+                        overlay: { path: sessionFrame.overlayPath, filename: 'overlay.png' },
+                        frameConfig: {
+                            width: sessionFrame.canvasWidth,
+                            height: sessionFrame.canvasHeight,
+                            slots: sessionFrame.slots.map(s => ({
+                                width: s.width,
+                                height: s.height,
+                                x: s.x,
+                                y: s.y,
+                                rotation: s.rotation
+                            }))
+                        }
+                    })
+
+                    if (saveResult.success && saveResult.data) {
+                        const videoFile = (saveResult.data as any[]).find(f => f.filename.startsWith('live_video_'))
+                        if (videoFile) {
+                            composedVideoPath = videoFile.path
+                            console.log('🎬 Composite video produced:', composedVideoPath)
+                        }
+                    }
+                } catch (saveErr) {
+                    console.error('Local save/composite failed:', saveErr)
+                }
+            }
+
+            // 3. Prepare Video (Using Composed Video if available, else fallback to raw)
+            const videoToPrepare = composedVideoPath || liveVideoPath
+            if (videoToPrepare) {
+                try {
+                    setUploadStatus('Membaca video Live Photo...')
+                    const diskPath = videoToPrepare.replace('file:///', '').replace('file://', '')
+                    const result = await window.api.system.readFileAsBase64(diskPath)
+                    
+                    if (result.success && result.data) {
+                        const videoBlob = base64ToBlob(result.data, 'video/mp4')
+                        mediaToUpload.push({ type: 'live', path: `${sessionId}/live.mp4`, blob: videoBlob, label: 'Live Video' } as any)
+                        console.log(`✅ ${composedVideoPath ? 'Composed' : 'Raw'} video prepared`)
+                    } else {
+                        throw new Error(result.error || 'Gagal membaca file video')
+                    }
+                } catch (vErr) {
+                    console.warn('Video preparation failed:', vErr)
+                    setUploadStatus('Warning: Gagal menyiapkan video.')
+                }
+            }
+
+            // 4. Prepare Individual Photos
+            for (let i = 0; i < photos.length; i++) {
+                try {
+                    const photo = photos[i]
+                    setUploadStatus(`Membaca Foto ${i + 1}/${photos.length}...`)
+                    
+                    let photoBlob: Blob | null = null
+                    if (photo.imagePath.startsWith('data:')) {
+                        // Path is already a base64 Data URL (e.g. from webcam screenshot)
+                        photoBlob = base64ToBlob(photo.imagePath, 'image/jpeg')
+                        console.log(`📸 Photo ${i+1} handled as Data URL`)
+                    } else {
+                        // Path is a local file system path (e.g. from DSLR)
+                        const diskPath = photo.imagePath.replace('file:///', '').replace('file://', '')
+                        console.log(`📸 Reading photo ${i+1} via IPC:`, diskPath)
+                        const result = await window.api.system.readFileAsBase64(diskPath)
+                        
+                        if (result.success && result.data) {
+                            photoBlob = base64ToBlob(result.data, 'image/jpeg')
+                            console.log(`✅ Photo ${i+1} prepared via IPC`)
+                        } else {
+                            throw new Error(result.error || `Gagal membaca foto ${i+1}`)
+                        }
+                    }
+                    
+                    if (photoBlob) {
+                        mediaToUpload.push({ 
+                            type: 'photo', 
+                            path: `${sessionId}/photo_${i + 1}.jpg`, 
+                            blob: photoBlob,
+                            label: `Photo ${i + 1}`
+                        } as any)
+                    }
+                } catch (pErr) {
+                    console.error(`Failed to handle individual photo ${i}:`, pErr)
+                }
+            }
+            console.log(`📸 Ready to upload ${mediaToUpload.length} items`)
+
+            setUploadStatus('Menyimpan sesi ke database...')
+            const { error: dbErr } = await supabase
+                .from('sessions')
+                .upsert({
+                    id: sessionId,
+                    event_name: config.eventName || 'Sebooth Event',
+                    is_claimed: false,
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'id' })
+            
+            if (dbErr) throw dbErr
+
+            // Set the ID immediately after DB record is created so QR code can point to the right place
+            setCloudSessionId(sessionId)
+
+            // 6. Upload all media and create database entries sequentially
+            let successCount = 0
+            for (let i = 0; i < mediaToUpload.length; i++) {
+                const item = mediaToUpload[i] as any
+                if (item.blob) {
+                    const progress = `(${i + 1}/${mediaToUpload.length})`
+                    setUploadStatus(`Mengirim ${item.label || item.type} ${progress}...`)
+                    
+                    try {
+                        const { data: uploadData, error: uploadErr } = await supabase.storage
+                            .from('assets')
+                            .upload(item.path, item.blob, { 
+                                contentType: item.type === 'live' ? 'video/mp4' : (item.type === 'gif' ? 'image/gif' : 'image/jpeg'), 
+                                upsert: true 
+                            })
+                        
+                        if (uploadErr) {
+                            console.error(`Storage Error for ${item.type}:`, uploadErr)
+                            continue
+                        }
+
+                        if (uploadData) {
+                            const publicUrl = supabase.storage.from('assets').getPublicUrl(uploadData.path).data.publicUrl
+                            
+                            const { error: insErr } = await supabase.from('media').insert({
+                                session_id: sessionId,
+                                type: item.type,
+                                url: publicUrl,
+                                metadata: item.path.includes('strip.jpg') ? { is_strip: true } : {}
+                            })
+
+                            if (insErr) {
+                                console.error(`DB Insert Error for ${item.type}:`, insErr)
+                            } else {
+                                successCount++
+                            }
+                        }
+                    } catch (loopErr) {
+                        console.error(`Unexpected loop error for ${item.type}:`, loopErr)
+                    }
+                }
+            }
+
+            setCloudSessionId(sessionId)
+            setUploadStatus(`Upload Selesai! (${successCount}/${mediaToUpload.length} sukses)`)
+            console.log(`✅ Upload Sequence Complete. Success: ${successCount}/${mediaToUpload.length}`)
+        } catch (err: any) {
+            console.error('❌ Cloud upload failed:', err)
+            setError(`Cloud Upload Gagal: ${err.message || 'Unknown error'}`)
+            setUploadStatus('Upload Gagal.')
+            uploadLockRef.current = null // Reset lock on error
+        } finally {
+            setIsUploading(false)
         }
     }
 
@@ -371,7 +623,7 @@ function OutputPage(): JSX.Element {
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
             <AnimatePresence>
-                {isProcessing && (
+                {(isProcessing || isUploading) && (
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -379,7 +631,8 @@ function OutputPage(): JSX.Element {
                         className={styles.loadingOverlay}
                     >
                         <div className={styles.spinner}></div>
-                        <p>Processing Magic...</p>
+                        <p>{isUploading ? 'Uploading to Cloud...' : 'Processing Magic...'}</p>
+                        {uploadStatus && <p className={styles.statusSubtext}>{uploadStatus}</p>}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -433,6 +686,7 @@ function OutputPage(): JSX.Element {
                         exit={{ opacity: 0, scale: 0.8 }}
                         className={styles.nextButton}
                         onClick={() => navigate('/sharing')}
+                        disabled={config.sharingMode === 'cloud' && !currentSession?.cloudSessionId}
                     >
                         Lanjutkan <span>→</span>
                     </motion.button>

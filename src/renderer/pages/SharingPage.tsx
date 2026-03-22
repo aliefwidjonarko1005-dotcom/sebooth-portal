@@ -21,40 +21,56 @@ function SharingPage(): JSX.Element {
         }
 
         generateQR()
-    }, [currentSession, navigate])
+    }, [currentSession?.id, currentSession?.cloudSessionId, config.sharingMode, config.cloudPortalUrl, navigate])
 
     const generateQR = async () => {
         setIsGenerating(true)
         setError(null)
         try {
-            // Check if we already have a gallery URL saved in the local storage for this session
+            // Priority 1: Check if we have a cloud session ID first (Cloud Mode)
+            if (config.sharingMode === 'cloud' && currentSession?.cloudSessionId) {
+                let portalBase = config.cloudPortalUrl
+                console.log('Generating QR for cloud session:', currentSession.cloudSessionId, 'with portal:', portalBase)
+                
+                if (!portalBase) {
+                    const ipRes = await (window as any).api.system.getLocalIp()
+                    const localIp = (ipRes && ipRes.success && ipRes.data) ? ipRes.data : 'localhost'
+                    portalBase = `http://${localIp}:3000`
+                }
+                
+                portalBase = portalBase.replace(/\/$/, '')
+                const portalUrl = `${portalBase}/access/${currentSession.cloudSessionId}`
+                
+                setQrUrl(portalUrl)
+                localStorage.setItem(`gallery_${currentSession.id}`, portalUrl)
+                setIsGenerating(false)
+                return
+            }
+
+            // Priority 2: Local Mode or Cached URLs
             const cachedUrl = localStorage.getItem(`gallery_${currentSession!.id}`)
-            if (cachedUrl) {
+            if (cachedUrl && !cachedUrl.includes('sebooth.app/download')) {
                 setQrUrl(cachedUrl)
                 setIsGenerating(false)
                 return
             }
 
-            // In local wifi mode, we expose the local server URL
+            // Priority 3: Fresh Generation
             if (config.sharingMode === 'local') {
                 const ipRes = await (window as any).api.system.getLocalIp()
                 if (ipRes && ipRes.success && ipRes.data) {
                     const localIp = ipRes.data
                     const localUrl = `http://${localIp}:5050/gallery/${currentSession!.id}`
                     setQrUrl(localUrl)
-                    
-                    // Save to localStorage so it persists
                     localStorage.setItem(`gallery_${currentSession!.id}`, localUrl)
                 } else {
                     throw new Error('Could not determine local IP')
                 }
             } else {
-                // For cloud mode, normally we'd trigger the upload here or point to the Sebooth Web App
-                // Since user mentioned: "diarahkan ke website sebooth terpisah... ini nanti saja, saya akan sediakan server"
-                // We'll create a dummy URL for now that represents the future Sebooth Web App.
+                console.warn('Cloud session ID not found in SharingPage, showing fallback')
+                // Final Fallback for Cloud Mode when ID is not yet available
                 const dummyUrl = `https://sebooth.app/download/${currentSession!.id}`
                 setQrUrl(dummyUrl)
-                localStorage.setItem(`gallery_${currentSession!.id}`, dummyUrl)
             }
         } catch (err) {
             console.error('Failed to generate QR or get URL:', err)
