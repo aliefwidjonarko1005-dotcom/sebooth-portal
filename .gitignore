@@ -35,3 +35,4 @@ tsc_errors*.txt
 website_tsc*.log
 website_tsc*.txt
 .vercel
+google-key.json
