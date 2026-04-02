@@ -51,9 +51,27 @@ const api = {
 
         printWithOptions: (
             filePath: string,
-            options: { printer?: string; copies?: number; scale?: 'fit' | 'noscale' }
+            options: { printer?: string; copies?: number; scale?: 'fit' | 'noscale', sessionId?: string }
         ): Promise<APIResponse<PrintResult>> =>
-            ipcRenderer.invoke('printer:print-with-options', filePath, options)
+            ipcRenderer.invoke('printer:print-with-options', filePath, options),
+            
+        getQueue: (): Promise<APIResponse<any[]>> =>
+            ipcRenderer.invoke('printer:get-queue'),
+            
+        getHistory: (): Promise<APIResponse<any[]>> =>
+            ipcRenderer.invoke('printer:get-history'),
+            
+        onQueueUpdate: (callback: (queue: any[]) => void) => {
+            const sub = (_: any, data: any[]) => callback(data)
+            ipcRenderer.on('printer:queue-updated', sub)
+            return () => ipcRenderer.removeListener('printer:queue-updated', sub)
+        },
+        
+        onHistoryUpdate: (callback: (history: any[]) => void) => {
+            const sub = (_: any, data: any[]) => callback(data)
+            ipcRenderer.on('printer:history-updated', sub)
+            return () => ipcRenderer.removeListener('printer:history-updated', sub)
+        }
     },
 
     // System APIs
@@ -191,6 +209,21 @@ const api = {
             ipcRenderer.invoke('drive:upload-session', params)
     },
 
+    // Cloud APIs
+    cloud: {
+        uploadFile: (params: {
+            bucketName: string;
+            destinationPath: string; // e.g. sessionId/photo.png
+            filePath?: string;
+            base64Data?: string;
+            mimeType: string;
+        }): Promise<{ success: boolean; url?: string; error?: string }> =>
+            ipcRenderer.invoke('cloud:upload-file', params),
+            
+        getQueue: (): Promise<APIResponse<any[]>> =>
+            ipcRenderer.invoke('cloud:get-queue')
+    },
+
     // Window APIs
     window: {
         toggleFullscreen: (): Promise<boolean> =>
@@ -198,6 +231,24 @@ const api = {
 
         toggleKiosk: (): Promise<boolean> =>
             ipcRenderer.invoke('window:toggle-kiosk')
+    },
+
+    // Config APIs (Phase 1 Remote Control)
+    config: {
+        get: (): Promise<APIResponse<any>> =>
+            ipcRenderer.invoke('config:get'),
+
+        update: (updates: any): Promise<APIResponse<any>> =>
+            ipcRenderer.invoke('config:update', updates),
+            
+        onUpdate: (callback: (config: any) => void): (() => void) => {
+            const subscription = (_: any, newConfig: any) => callback(newConfig)
+            ipcRenderer.on('config:updated', subscription)
+            // Return unsubscribe function
+            return () => {
+                ipcRenderer.removeListener('config:updated', subscription)
+            }
+        }
     }
 }
 

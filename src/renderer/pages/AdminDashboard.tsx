@@ -2,7 +2,9 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useFrameStore, useAppConfig, useFilterStore } from '../stores'
-import { PhotoSlot, PrinterDevice } from '@shared/types'
+import { AppConfig, FrameConfig, PhotoSlot, PrinterDevice } from '@shared/types'
+import { v4 as uuidv4 } from 'uuid'
+import { apiHelper } from '../lib/apiHelper'
 import { getSessionHistory, SessionHistoryItem } from '../lib/supabase'
 import styles from './AdminDashboard.module.css'
 
@@ -14,7 +16,12 @@ function AdminDashboard(): JSX.Element {
     const { config, updateConfig } = useAppConfig()
     const { filters, addFilter, removeFilter } = useFilterStore()
 
-    const [activeTab, setActiveTab] = useState<'frames' | 'timers' | 'filters' | 'payment' | 'history' | 'sharing' | 'printers'>('frames')
+    const [activeTab, setActiveTab] = useState<'frames' | 'timers' | 'filters' | 'payment' | 'history' | 'sharing' | 'printers' | 'queue'>('frames')
+    const [cloudQueue, setCloudQueue] = useState<any[]>([])
+    const [isLoadingQueue, setIsLoadingQueue] = useState(false)
+    const [printQueue, setPrintQueue] = useState<any[]>([])
+    const [printHistory, setPrintHistory] = useState<any[]>([])
+    const [isLoadingPrintData, setIsLoadingPrintData] = useState(false)
     const [selectedFrameId, setSelectedFrameId] = useState<string | null>(frames[0]?.id || null)
     const [draggedSlotId, setDraggedSlotId] = useState<string | null>(null)
     const [dragMode, setDragMode] = useState<DragMode>(null)
@@ -32,14 +39,53 @@ function AdminDashboard(): JSX.Element {
 
     const canvasRef = useRef<HTMLDivElement>(null)
 
-    // Fetch local IP on mount
+    // Fetch handlers
+    const fetchIp = async () => {
+        const result = await (window as any).api.system.getLocalIp()
+        if (result.success && result.data) setLocalIp(result.data)
+    }
+
+    const fetchCloudQueue = async () => {
+        setIsLoadingQueue(true)
+        try {
+            const q = await apiHelper.getQueue()
+            setCloudQueue(q || [])
+        } catch(e) {}
+        setIsLoadingQueue(false)
+    }
+
+    const fetchPrintData = async () => {
+        setIsLoadingPrintData(true)
+        try {
+            const q = await apiHelper.getPrintQueue()
+            const h = await apiHelper.getPrintHistory()
+            setPrintQueue(q || [])
+            setPrintHistory(h || [])
+        } catch(e) {}
+        setIsLoadingPrintData(false)
+    }
+
+    // Load initial data on mount
     useEffect(() => {
-        const fetchIp = async () => {
-            const result = await window.api.system.getLocalIp()
-            if (result.success && result.data) setLocalIp(result.data)
-        }
         fetchIp()
     }, [])
+
+    // Polling handler mapping to activeTab
+    useEffect(() => {
+        if (activeTab === 'queue') {
+            fetchCloudQueue()
+        }
+        if (activeTab === 'printers') {
+            fetchPrintData()
+        }
+        
+        const intervalId = setInterval(() => {
+            if (activeTab === 'queue') fetchCloudQueue()
+            if (activeTab === 'printers') fetchPrintData()
+        }, 5000)
+        
+        return () => clearInterval(intervalId)
+    }, [activeTab])
 
     // Fetch available printers
     useEffect(() => {
@@ -392,13 +438,9 @@ function AdminDashboard(): JSX.Element {
                 </button>
                 <h1>Admin Dashboard</h1>
                 <div className={styles.headerActions}>
-                    <button
-                        className={styles.primaryButton}
-                        onClick={handleSetActive}
-                        disabled={!selectedFrame}
-                    >
-                        Set as Active
-                    </button>
+                    <span style={{ fontSize: '14px', color: '#10b981', marginRight: '15px', fontWeight: 'bold' }}>
+                        ✅ Settings Auto-Save Enabled
+                    </span>
                 </div>
             </header>
 
@@ -445,6 +487,12 @@ function AdminDashboard(): JSX.Element {
                     onClick={() => setActiveTab('printers')}
                 >
                     🖨️ Printers
+                </button>
+                <button
+                    className={`${styles.tab} ${activeTab === 'queue' ? styles.active : ''}`}
+                    onClick={() => setActiveTab('queue')}
+                >
+                    ☁️ Cloud Queue
                 </button>
             </nav>
 
@@ -525,6 +573,13 @@ function AdminDashboard(): JSX.Element {
                                         </div>
                                         <button className={styles.addSlotButton} onClick={handleAddSlot}>
                                             + Add Photo Slot
+                                        </button>
+                                        <button
+                                            className={styles.primaryButton}
+                                            onClick={handleSetActive}
+                                            style={{ marginLeft: '10px' }}
+                                        >
+                                            Set as Active Frame
                                         </button>
                                         {selectedFrame.slots.length > 0 && (
                                             <button className={styles.clearSlotsButton} onClick={handleClearAllSlots}>
@@ -1470,8 +1525,121 @@ function AdminDashboard(): JSX.Element {
                                 </p>
                             )}
                         </div>
+                        
+                        {/* Print Queue State */}
+                        <div className={styles.timerCard} style={{ gridColumn: '1 / -1' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3>🖨️ Active Print Queue</h3>
+                                <button className={styles.addButton} onClick={fetchPrintData} disabled={isLoadingPrintData}>
+                                    🔄 Refresh
+                                </button>
+                            </div>
+                            
+                            <div className={styles.historyTable} style={{ marginTop: '15px' }}>
+                                <div className={styles.tableHeader}>
+                                    <span>Job ID</span>
+                                    <span>Printer</span>
+                                    <span>Status</span>
+                                    <span>Copies</span>
+                                </div>
+                                {printQueue.length > 0 ? printQueue.map(job => (
+                                    <div key={job.id} className={styles.tableRow}>
+                                        <span className={styles.emailCell}>{job.id}</span>
+                                        <span className={styles.printCell}>{job.printerName}</span>
+                                        <span className={styles.galleryCell} style={{ color: job.status === 'PRINTING' ? '#3b82f6' : '#f59e0b', fontWeight: 'bold' }}>
+                                            {job.status === 'PRINTING' ? '🖨️ Printing...' : '⏳ Queued'}
+                                        </span>
+                                        <span className={styles.dateCell}>{job.copies} Pages</span>
+                                    </div>
+                                )) : (
+                                    <div className={styles.tableRow} style={{ justifyContent: 'center' }}>
+                                        <span style={{ gridColumn: '1 / -1', textAlign: 'center', opacity: 0.5 }}>No active print jobs</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Print History State */}
+                        <div className={styles.timerCard} style={{ gridColumn: '1 / -1' }}>
+                            <h3>📜 Print History (Recent)</h3>
+                            
+                            <div className={styles.historyTable} style={{ marginTop: '15px', maxHeight: '300px', overflowY: 'auto' }}>
+                                <div className={styles.tableHeader}>
+                                    <span>Session / Time</span>
+                                    <span>Printer</span>
+                                    <span>Status</span>
+                                    <span>Copies</span>
+                                </div>
+                                {printHistory.slice(0, 50).map(job => (
+                                    <div key={job.id} className={styles.tableRow}>
+                                        <span className={styles.emailCell}>
+                                            {new Date(job.createdAt).toLocaleTimeString()}
+                                        </span>
+                                        <span className={styles.printCell}>{job.printerName}</span>
+                                        <span className={styles.galleryCell} style={{ color: job.status === 'COMPLETED' ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
+                                            {job.status === 'COMPLETED' ? '✅ Done' : '❌ Failed'}
+                                        </span>
+                                        <span className={styles.dateCell}>{job.copies} Pages</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
+
+                {/* Queue Monitoring Tab */}
+                {activeTab === 'queue' && (
+                     <div className={styles.historyTab}>
+                         <div className={styles.historyHeader}>
+                             <h3>☁️ Offline Upload Queue Tracker</h3>
+                             <span className={styles.historyCount}>Pending Items: {cloudQueue.length}</span>
+                             <button
+                                 className={styles.addButton}
+                                 onClick={fetchCloudQueue}
+                                 disabled={isLoadingQueue}
+                             >
+                                 🔄 Refresh
+                             </button>
+                         </div>
+                         
+                         {isLoadingQueue ? (
+                             <div className={styles.loadingState}>
+                                 <div className={styles.spinner}></div>
+                                 <p>Loading Pending Offline Uploads...</p>
+                             </div>
+                         ) : cloudQueue.length > 0 ? (
+                            <div className={styles.historyTable}>
+                                <div className={styles.tableHeader}>
+                                    <span>Type</span>
+                                    <span>Destination (Session)</span>
+                                    <span>Status</span>
+                                    <span>Retries</span>
+                                </div>
+                                {cloudQueue.map((item) => (
+                                    <div key={item.id} className={styles.tableRow}>
+                                        <span className={styles.emailCell}>
+                                            {item.mimeType?.includes('video') ? '🎥 Video' : item.mimeType?.includes('image/gif') ? '🎞️ GIF' : '📸 Photo'}
+                                        </span>
+                                        <span className={styles.printCell} style={{ fontSize: '13px' }}>
+                                            {item.destinationPath || <em style={{ opacity: 0.5 }}>Unknown</em>}
+                                        </span>
+                                        <span className={styles.galleryCell} style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                                            ⏳ Queued
+                                        </span>
+                                        <span className={styles.dateCell}>
+                                            {item.retryCount || 0} attempts
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                         ) : (
+                             <div className={styles.emptyState} style={{ padding: '60px 20px' }}>
+                                 <p>No Pending Uploads</p>
+                                 <p>All photos and videos have been successfully synced to the cloud!</p>
+                             </div>
+                         )}
+                     </div>
+                 )}
             </main >
         </motion.div >
     )

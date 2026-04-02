@@ -5,6 +5,7 @@ import { join, basename } from 'path'
 import { existsSync, readdirSync, statSync } from 'fs'
 import { networkInterfaces } from 'os'
 import { printerHandler } from './handlers/PrinterHandler'
+import { configService } from './services/ConfigService'
 
 let serverInstance: any = null
 
@@ -13,6 +14,7 @@ export function startLocalServer(port = 5050) {
 
     const server = express()
     server.use(cors())
+    server.use(express.json()) // To parse POST bodies
 
     const documentsPath = app.getPath('documents')
     const sessionsDir = join(documentsPath, 'Sebooth', 'Sessions')
@@ -20,6 +22,9 @@ export function startLocalServer(port = 5050) {
     // Serve static files directly from the Sessions folder
     // E.g., http://<ip>:5050/Session_uuid/photo_1.jpg
     server.use(express.static(sessionsDir))
+    
+    // Serve the React Admin Dashboard (Vite Build) statically
+    server.use(express.static(join(__dirname, '../renderer')))
 
     // Helper: find session folder by sessionId (supports both Session_<id> and Session_<email>_<id>)
     function findSessionFolder(sessionId: string): string | null {
@@ -216,7 +221,40 @@ export function startLocalServer(port = 5050) {
         }
     })
 
-    // 2. API to trigger remote print
+    // 1b. Config APIs (Phase 1 Remote Control)
+    server.get('/api/config', (req, res) => {
+        res.json(configService.getConfig())
+    })
+
+    server.post('/api/config', (req, res) => {
+        try {
+            const newConfig = configService.updateConfig(req.body)
+            res.json({ success: true, config: newConfig })
+        } catch (e) {
+            res.status(500).json({ error: 'Failed to update config' })
+        }
+    })
+
+    // 2. API to get print queue & history
+    server.get('/api/print/queue', (req, res) => {
+        try {
+            const { printQueueService } = require('./services/PrintQueueService')
+            res.json(printQueueService.getQueue())
+        } catch (e) {
+            res.status(500).json({ error: 'Failed' })
+        }
+    })
+
+    server.get('/api/print/history', (req, res) => {
+        try {
+            const { printQueueService } = require('./services/PrintQueueService')
+            res.json(printQueueService.getHistory())
+        } catch (e) {
+            res.status(500).json({ error: 'Failed' })
+        }
+    })
+
+    // 3. API to trigger remote print
     server.post('/api/print/:sessionId', async (req, res) => {
         const { sessionId } = req.params
         const sessionPath = findSessionFolder(sessionId)
@@ -234,13 +272,13 @@ export function startLocalServer(port = 5050) {
             }
 
             const stripPath = join(sessionPath, photoStrip)
-            const result = await printerHandler.print(stripPath)
+            
+            // Send into queue service
+            const { printQueueService } = require('./services/PrintQueueService')
+            printQueueService.addJob(sessionId, stripPath, 'Print to PDF', 1)
 
-            if (result.success) {
-                res.json({ success: true, message: 'Print job sent successfully!' })
-            } else {
-                res.status(500).json({ error: result.error || 'Failed to print' })
-            }
+            // Immediately return success
+            res.json({ success: true, message: 'Print job queued in the background!' })
 
         } catch (error) {
             console.error('Print trigger error:', error)

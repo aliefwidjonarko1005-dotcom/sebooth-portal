@@ -1,6 +1,8 @@
 import { IpcMain } from 'electron'
 import { printerHandler } from '../handlers/PrinterHandler'
+import { printQueueService } from '../services/PrintQueueService'
 import { PrinterDevice, PrintResult, APIResponse } from '@shared/types'
+import * as path from 'path'
 
 /**
  * Register all printer-related IPC handlers
@@ -29,26 +31,37 @@ export function registerPrinterHandlers(ipcMain: IpcMain): void {
         }
     })
 
-    // Print a file silently
+    // Read current queue and history
+    ipcMain.handle('printer:get-queue', async () => {
+        return { success: true, data: printQueueService.getQueue() }
+    })
+    ipcMain.handle('printer:get-history', async () => {
+        return { success: true, data: printQueueService.getHistory() }
+    })
+
+    // Print a file silently (Routed through the queue)
     ipcMain.handle('printer:print', async (_, filePath: string, printerName?: string): Promise<APIResponse<PrintResult>> => {
         try {
-            const result = await printerHandler.print(filePath, printerName)
-            return { success: result.success, data: result, error: result.error }
+            const sessionId = path.basename(path.dirname(filePath)) || 'unknown'
+            printQueueService.addJob(sessionId, filePath, printerName || 'Print to PDF', 1)
+            return { success: true, data: { success: true }, error: undefined }
         } catch (error) {
             const err = error as Error
             return { success: false, error: err.message }
         }
     })
 
-    // Print with options
+    // Print with options (Routed through the queue)
     ipcMain.handle('printer:print-with-options', async (
         _,
         filePath: string,
-        options: { printer?: string; copies?: number; scale?: 'fit' | 'noscale' }
+        options: { printer?: string; copies?: number; scale?: 'fit' | 'noscale', sessionId?: string }
     ): Promise<APIResponse<PrintResult>> => {
         try {
-            const result = await printerHandler.printWithOptions(filePath, options)
-            return { success: result.success, data: result, error: result.error }
+            const copies = options.copies || 1
+            const sessionId = options.sessionId || path.basename(path.dirname(filePath)) || 'unknown'
+            printQueueService.addJob(sessionId, filePath, options.printer || 'Print to PDF', copies)
+            return { success: true, data: { success: true }, error: undefined }
         } catch (error) {
             const err = error as Error
             return { success: false, error: err.message }

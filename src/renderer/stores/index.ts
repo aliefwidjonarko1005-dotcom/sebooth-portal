@@ -50,38 +50,32 @@ const defaultConfig: AppConfig = {
     selectedCameraId: undefined
 }
 
-export const useAppConfig = create<AppConfigState>()(
-    persist(
-        (set) => ({
-            config: defaultConfig,
-            updateConfig: (updates) => set((state) => ({
-                config: { ...state.config, ...updates }
-            })),
-            resetConfig: () => set({ config: defaultConfig })
-        }),
-        {
-            name: 'sebooth-config',
-            // Merge persisted state with defaults to handle missing new fields
-            merge: (persistedState, currentState) => {
-                const persisted = persistedState as { config?: Partial<AppConfig> & { activeFrameId?: string } } | undefined
-                if (persisted?.config) {
-                    // Migrate old activeFrameId to activeFrameIds
-                    if ('activeFrameId' in persisted.config && persisted.config.activeFrameId) {
-                        persisted.config.activeFrameIds = [persisted.config.activeFrameId]
-                        delete persisted.config.activeFrameId
-                    }
-                }
-                return {
-                    ...currentState,
-                    config: {
-                        ...currentState.config,
-                        ...(persisted?.config || {})
-                    }
-                }
-            }
+import { apiHelper } from '../lib/apiHelper'
+
+export const useAppConfig = create<AppConfigState>((set) => {
+    // Initial fetch
+    apiHelper.getConfig().then((data) => {
+        if (data) set({ config: data })
+    })
+
+    // Listen for real-time updates from Laptop Main Process
+    apiHelper.onConfigUpdate((newConfig) => {
+        set({ config: newConfig })
+    })
+
+    return {
+        config: defaultConfig,
+        updateConfig: async (updates) => {
+            // Optimistic update
+            set((state) => ({ config: { ...state.config, ...updates } }))
+            await apiHelper.updateConfig(updates)
+        },
+        resetConfig: () => {
+            set({ config: defaultConfig })
+            apiHelper.updateConfig(defaultConfig)
         }
-    )
-)
+    }
+})
 
 // ================================
 // Frame Config Store with Undo/Redo

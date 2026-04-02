@@ -80,43 +80,16 @@ function OutputPage(): JSX.Element {
         try {
             const sessionId = currentSession?.id || crypto.randomUUID()
             
-            // Helper to convert base64 to blob (handles both with and without data URL prefix)
-            const base64ToBlob = (base64: string, defaultMime: string) => {
-                let mime = defaultMime
-                let bstr: string
-                
-                if (base64.startsWith('data:')) {
-                    const arr = base64.split(',')
-                    mime = arr[0].match(/:(.*?);/)![1]
-                    bstr = atob(arr[1])
-                } else {
-                    bstr = atob(base64)
-                }
-                
-                let n = bstr.length
-                const u8arr = new Uint8Array(n)
-                while (n--) {
-                    u8arr[n] = bstr.charCodeAt(n)
-                }
-                return new Blob([u8arr], { type: mime })
-            }
-
-            const mediaToUpload: { type: string; url?: string; path: string; blob?: Blob | File }[] = []
+            const mediaToUpload: { type: string; url?: string; path: string; base64Data?: string; filePath?: string; mimeType: string; label: string }[] = []
 
             // 1. Prepare Strip
             if (compositeDataUrl) {
-                try {
-                    const stripBlob = base64ToBlob(compositeDataUrl, 'image/jpeg')
-                    mediaToUpload.push({ type: 'photo', path: `${sessionId}/strip.jpg`, blob: stripBlob, label: 'Photo Strip' } as any)
-                } catch (e) { console.error('Strip blob conversion failed', e) }
+                mediaToUpload.push({ type: 'photo', path: `${sessionId}/strip.jpg`, base64Data: compositeDataUrl, mimeType: 'image/jpeg', label: 'Photo Strip' })
             }
 
             // 2. Prepare GIF
             if (gifDataUrl) {
-                try {
-                    const gifBlob = base64ToBlob(gifDataUrl, 'image/gif')
-                    mediaToUpload.push({ type: 'gif', path: `${sessionId}/animation.gif`, blob: gifBlob, label: 'GIF Animation' } as any)
-                } catch (e) { console.error('GIF blob conversion failed', e) }
+                mediaToUpload.push({ type: 'gif', path: `${sessionId}/animation.gif`, base64Data: gifDataUrl, mimeType: 'image/gif', label: 'GIF Animation' })
             }
 
             // 0. Trigger Local Save (This generates the composite video via FFmpeg)
@@ -174,59 +147,30 @@ function OutputPage(): JSX.Element {
                 }
             }
 
-            // 3. Prepare Video (Using Composed Video if available, else fallback to raw)
+            // 3. Prepare Video
             const videoToPrepare = composedVideoPath || liveVideoPath
             if (videoToPrepare) {
-                try {
-                    setUploadStatus('Membaca video Live Photo...')
-                    const diskPath = videoToPrepare.replace('file:///', '').replace('file://', '')
-                    const result = await window.api.system.readFileAsBase64(diskPath)
-                    
-                    if (result.success && result.data) {
-                        const videoBlob = base64ToBlob(result.data, 'video/mp4')
-                        mediaToUpload.push({ type: 'live', path: `${sessionId}/live.mp4`, blob: videoBlob, label: 'Live Video' } as any)
-                        console.log(`✅ ${composedVideoPath ? 'Composed' : 'Raw'} video prepared`)
-                    } else {
-                        throw new Error(result.error || 'Gagal membaca file video')
-                    }
-                } catch (vErr) {
-                    console.warn('Video preparation failed:', vErr)
-                    setUploadStatus('Warning: Gagal menyiapkan video.')
-                }
+                setUploadStatus('Menyiapkan media video...')
+                const diskPath = videoToPrepare.replace('file:///', '').replace('file://', '')
+                mediaToUpload.push({ type: 'live', path: `${sessionId}/live.mp4`, filePath: diskPath, mimeType: 'video/mp4', label: 'Live Video' })
+                console.log(`✅ ${composedVideoPath ? 'Composed' : 'Raw'} video prepared via path IPC handler`)
             }
 
             // 4. Prepare Individual Photos
             for (let i = 0; i < photos.length; i++) {
                 try {
                     const photo = photos[i]
-                    setUploadStatus(`Membaca Foto ${i + 1}/${photos.length}...`)
+                    setUploadStatus(`Menyiapkan Foto ${i + 1}/${photos.length}...`)
                     
-                    let photoBlob: Blob | null = null
                     if (photo.imagePath.startsWith('data:')) {
-                        // Path is already a base64 Data URL (e.g. from webcam screenshot)
-                        photoBlob = base64ToBlob(photo.imagePath, 'image/jpeg')
-                        console.log(`📸 Photo ${i+1} handled as Data URL`)
-                    } else {
-                        // Path is a local file system path (e.g. from DSLR)
-                        const diskPath = photo.imagePath.replace('file:///', '').replace('file://', '')
-                        console.log(`📸 Reading photo ${i+1} via IPC:`, diskPath)
-                        const result = await window.api.system.readFileAsBase64(diskPath)
-                        
-                        if (result.success && result.data) {
-                            photoBlob = base64ToBlob(result.data, 'image/jpeg')
-                            console.log(`✅ Photo ${i+1} prepared via IPC`)
-                        } else {
-                            throw new Error(result.error || `Gagal membaca foto ${i+1}`)
-                        }
-                    }
-                    
-                    if (photoBlob) {
                         mediaToUpload.push({ 
-                            type: 'photo', 
-                            path: `${sessionId}/photo_${i + 1}.jpg`, 
-                            blob: photoBlob,
-                            label: `Photo ${i + 1}`
-                        } as any)
+                            type: 'photo', path: `${sessionId}/photo_${i + 1}.jpg`, base64Data: photo.imagePath, mimeType: 'image/jpeg', label: `Photo ${i + 1}`
+                        })
+                    } else {
+                        const diskPath = photo.imagePath.replace('file:///', '').replace('file://', '')
+                        mediaToUpload.push({ 
+                            type: 'photo', path: `${sessionId}/photo_${i + 1}.jpg`, filePath: diskPath, mimeType: 'image/jpeg', label: `Photo ${i + 1}`
+                        })
                     }
                 } catch (pErr) {
                     console.error(`Failed to handle individual photo ${i}:`, pErr)
@@ -251,44 +195,44 @@ function OutputPage(): JSX.Element {
 
             // 6. Upload all media and create database entries sequentially
             let successCount = 0
+            const GCS_BUCKET_NAME = 'sebooth-media-konser'; // HARAP GANTI JIKA NAMA BUCKET ANDA BERBEDA!
+            
             for (let i = 0; i < mediaToUpload.length; i++) {
-                const item = mediaToUpload[i] as any
-                if (item.blob) {
-                    const progress = `(${i + 1}/${mediaToUpload.length})`
-                    setUploadStatus(`Mengirim ${item.label || item.type} ${progress}...`)
-                    
-                    try {
-                        const { data: uploadData, error: uploadErr } = await supabase.storage
-                            .from('assets')
-                            .upload(item.path, item.blob, { 
-                                contentType: item.type === 'live' ? 'video/mp4' : (item.type === 'gif' ? 'image/gif' : 'image/jpeg'), 
-                                upsert: true 
-                            })
-                        
-                        if (uploadErr) {
-                            console.error(`Storage Error for ${item.type}:`, uploadErr)
-                            continue
-                        }
+                const item = mediaToUpload[i]
+                const progress = `(${i + 1}/${mediaToUpload.length})`
+                setUploadStatus(`Mengunggah ${item.label || item.type} ${progress}...`)
+                
+                try {
+                    // Upload ke Google Cloud Storage via Electron Main Process
+                    const uploadResult = await (window as any).api.cloud.uploadFile({
+                        bucketName: GCS_BUCKET_NAME,
+                        destinationPath: item.path,
+                        filePath: item.filePath,
+                        base64Data: item.base64Data,
+                        mimeType: item.mimeType
+                    });
 
-                        if (uploadData) {
-                            const publicUrl = supabase.storage.from('assets').getPublicUrl(uploadData.path).data.publicUrl
-                            
-                            const { error: insErr } = await supabase.from('media').insert({
-                                session_id: sessionId,
-                                type: item.type,
-                                url: publicUrl,
-                                metadata: item.path.includes('strip.jpg') ? { is_strip: true } : {}
-                            })
-
-                            if (insErr) {
-                                console.error(`DB Insert Error for ${item.type}:`, insErr)
-                            } else {
-                                successCount++
-                            }
-                        }
-                    } catch (loopErr) {
-                        console.error(`Unexpected loop error for ${item.type}:`, loopErr)
+                    if (!uploadResult.success || !uploadResult.url) {
+                        console.error(`GCS Storage Error for ${item.type}:`, uploadResult.error)
+                        continue
                     }
+
+                    const publicUrl = uploadResult.url;
+                    
+                    const { error: insErr } = await supabase.from('media').insert({
+                        session_id: sessionId,
+                        type: item.type,
+                        url: publicUrl,
+                        metadata: item.path.includes('strip.jpg') ? { is_strip: true } : {}
+                    })
+
+                    if (insErr) {
+                        console.error(`DB Insert Error for ${item.type}:`, insErr)
+                    } else {
+                        successCount++
+                    }
+                } catch (loopErr) {
+                    console.error(`Unexpected loop error for ${item.type}:`, loopErr)
                 }
             }
 

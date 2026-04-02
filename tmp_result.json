@@ -1,0 +1,49 @@
+{
+  "totalSessions": 61,
+  "totalSizeMB": "189.56",
+  "avgSizeMB": "3.11",
+  "top5Largest": [
+    {
+      "name": "Session_71111e80-4a70-4e74-9637-e291a4086e94",
+      "sizeMB": 6.15
+    },
+    {
+      "name": "Session_1b012668-553b-41cd-888b-82069f7c9e4d",
+      "sizeMB": 5.78
+    },
+    {
+      "name": "Session_441f2913-2c8a-47e3-9669-3f017afda1f7",
+      "sizeMB": 5.43
+    },
+    {
+      "name": "Session_edeac45a-960c-4144-8a9c-18738146288d",
+      "sizeMB": 4.95
+    },
+    {
+      "name": "Session_45c60000-624c-4451-9f56-4070e721302e",
+      "sizeMB": 4.82
+    }
+  ],
+  "top5Smallest": [
+    {
+      "name": "Session_80a72b6b-becb-4fa6-8f00-81f0577d1e5c",
+      "sizeMB": 0.67
+    },
+    {
+      "name": "Session_alief.widjonarko1005_at_gmail.com_78924414-3c76-49c8-9750-0d3b968f9be7",
+      "sizeMB": 0.81
+    },
+    {
+      "name": "Session_8247838b-3db4-4810-a939-21e49d0345d6",
+      "sizeMB": 0.81
+    },
+    {
+      "name": "Session_31796878-3491-45fe-825c-6dea6a87a149",
+      "sizeMB": 0.81
+    },
+    {
+      "name": "Session_a25d1b34-7305-4fc6-8ad6-a5076ec2629b",
+      "sizeMB": 1.01
+    }
+  ]
+}

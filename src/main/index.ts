@@ -7,6 +7,17 @@ import { registerSystemHandlers } from './ipc/system.ipc'
 import { registerImageHandlers } from './ipc/image.ipc'
 import { registerEmailHandlers } from './ipc/email.ipc'
 import { registerDriveHandlers } from './ipc/drive.ipc'
+import { registerCloudHandlers } from './ipc/cloud.ipc'
+import './services/ConfigService' // Boot ConfigService natively
+
+// Global safeguard to prevent Photobooth crash on USB/Hardware random disconnects
+process.on('uncaughtException', (error) => {
+    console.error('[System Fault] Prevented crash from uncaught exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[System Fault] Prevented crash from unhandled rejection. Reason:', reason);
+});
 
 let mainWindow: BrowserWindow | null = null
 
@@ -63,6 +74,10 @@ app.whenReady().then(() => {
     registerImageHandlers(ipcMain)
     registerEmailHandlers(ipcMain)
     registerDriveHandlers(ipcMain)
+    registerCloudHandlers()
+    
+    // Auto-sweep old heavy media off SSD
+    import('./services/Janitor').then(({ janitor }) => janitor.runCleanup())
 
     // Launch background sharing web server (port 5050)
     import('./server').then(({ startLocalServer }) => {

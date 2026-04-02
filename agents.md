@@ -3,58 +3,111 @@
 Welcome AI Agent! This file (`agents.md`) provides critical context, architecture details, and development conventions for the **Sebooth** project. Please read and follow these guidelines when modifying or creating code in this repository.
 
 ## 1. Project Overview
-**Sebooth** is a high-end desktop photobooth application built with Electron and React.
+**Sebooth** is divided into two distinct but interconnected systems: the **Desktop Photobooth Application** and the **External Website / Web Portal**.
+
+### A. Desktop Photobooth Application (Electron + React)
+The high-end main engine running on the local machine at events.
 Key features include:
-- **DSLR/Mirrorless Camera Integration** via `digiCamControl` (PTP communication).
-- **Silent Printing** directly to connected printers without UI dialogs.
-- **Media Processing** for photos (PNG overlays, LUT filters), boomerangs, and GIFs.
-- **Cloud Storage & Logging** via Supabase.
+- **DSLR/Mirrorless Camera Integration**: via `digiCamControl` (PTP communication) managed directly in the main process.
+- **Silent Printing**: Directly to connected printers without UI dialogs via `pdf-to-printer` and an integrated print queue.
+- **Media Processing**: Generates static photo layouts (PNG/PDF), Boomerangs, GIFs, and applies live LUT filters via `sharp` and `fluent-ffmpeg`.
+- **Cloud & Local Storage Hybrid**: Uses **Supabase** (Database/Logs) and **Google Cloud Storage / Google Drive** (Heavy Media Files) for syncing medias to the cloud.
+- **Sharing Mechanism (QR Code)**: The app generates a QR Code that automatically directs the user to the *External Website*. (Note: Kami TIDAK menggunakan Webhook atau bot LINE untuk mekanisme ini).
+- **Comprehensive Admin Panel**: A secure local dashboard for staff and owners to manage settings, adjust pricing, manage an Instagram Feed, and extract offline/online session logs directly to Excel (`.xlsx`). It also supports a super-admin hierarchy.
+
+### B. External Website / Web Portal (Company Profile & Photo Claim)
+The public-facing website on the internet, which users access either organically or via scanning the QR Code at the booth.
+Key features include:
+- **Company Profile**: The main landing pages showcasing Sebooth's portfolio, event packages, pricing, and services.
+- **Photo Claim Mechanism**: When visitors scan their unique QR code from the Desktop Photobooth Application, they are redirected to a dynamic page on this website to view, download, and securely claim their photos and boomerangs from the cloud storage.
+- **Inline Visual Editor**: A "Wix-like" live visual editor that allows Website Admins to click and edit textual content or layouts directly on the live website, which is instantly saved to the database.
+
+---
 
 ## 2. Technology Stack
-- **Core**: Electron, React 18, Vite.
+
+**1. Desktop Application (`sebooth`)**:
+- **Core Framework**: Electron, React 18, Vite.
 - **Language**: TypeScript (Strict typing preferred).
-- **State Management**: Zustand.
-- **Routing**: React Router DOM.
-- **Media & Image Processing**: 
-  - `fluent-ffmpeg` / `@ffmpeg-installer/ffmpeg` (Video processing)
-  - `sharp` (Image manipulation)
-  - `gifenc` (GIF encoding)
-- **Hardware & Peripherals**: 
-  - `pdf-to-printer` (Printing)
-  - `usb` (Device detection)
-- **Backend/Cloud**: Supabase (`@supabase/supabase-js`).
+- **State & Routing**: Zustand & React Router DOM (v6).
+- **Media Processing**: `fluent-ffmpeg`, `sharp`, `gifenc`, `pdf-lib`.
+- **Hardware Integrations**: `pdf-to-printer` (Printing), `usb` (Device detection).
+- **Backend APIs**: Express & Cors (For Local Area Network API / Admin Monitoring), Supabase (`@supabase/supabase-js`), Google APIs (`@google-cloud/storage`, `googleapis`).
+
+**2. Website / Web Portal (`sebooth-gallery` / Web Repo)**:
+- **Core Framework**: Web project for static QR code landing handling / Next.js / React frameworks.
+- **Email Delivery**: Resend & Nodemailer (If emails are sent directly from the website).
+- **Cloud/CDN Infrastructure Architecture**: 
+  - **Supabase**: Relational metadata storage (Session UUIDs, timestamps).
+  - **Google Cloud Storage (GCS)**: Scalable storage for heavy files (photos, videos, GIFs).
+  - **Cloudflare**: DNS handling, CDN for GCS egress optimization, and optional WAF integration for Vercel/Website node.
+
+---
 
 ## 3. Project Architecture
-The `src/` directory is split into the standard secure Electron architecture:
 
-- **`src/main/`**: Electron Main Process. Handles native machine resources, hardware integrations (cameras, printers), database connections, and heavy media processing (FFmpeg, Sharp).
-- **`src/preload/`**: Context Bridge. Safely exposes scoped IPC communication methods from the main process to the renderer process.
-- **`src/renderer/`**: React Frontend. Handles the UI, state, camera live view, and user interactions. 
-- **`src/shared/`**: Shared types and constants used across both Main and Renderer processes to ensure type safety for IPC calls.
+### Desktop Application System (`src/`)
+The desktop codebase strictly adheres to secure Electron paradigms:
+- **`src/main/`**: Electron Main Process. Handles heavy CPU tasks, hardware interactions (cameras, printers), and database connections. Included services like `ImageProcessor.ts`.
+- **`src/main/ipc/`**: Inter-Process Communication endpoints (`camera.ipc.ts`, `printer.ipc.ts`, `cloud.ipc.ts`, etc.).
+- **`src/preload/`**: Context Bridge to safely expose IPC handlers to the React frontend.
+- **`src/renderer/`**: React Frontend. Handles the graphical interface, camera live view streams, user transitions, and the Internal Admin Dashboard.
+- **`src/shared/`**: Contains shared DTOs and types for cross-boundary safety.
+
+### Website / Gallery System
+- **`sebooth-gallery/`**: A standalone Node project/directory designated for the photo claim landing pages and web assets. 
+
+---
 
 ## 4. Development Rules & Conventions
 
-### IPC Communication (Crucial)
+### IPC Communication (Desktop Only)
 - **DO NOT** expose raw `ipcRenderer` or Node.js built-ins directly to the React frontend.
 - **ALWAYS** define IPC channels and payload types in `src/shared/`.
-- Register the handlers in `src/main/` and expose them to the frontend strictly through `src/preload/`.
+- **Cloud Integrations**: Operations requiring secret keys (GCP Service Accounts, Supabase keys) *must* happen strictly via the Main Process (`src/main/ipc`). The frontend only triggers the events.
 
 ### Performance & Threading
-- **Heavy Processing in Main**: Any CPU-intensive task (like applying LUT filters via Sharp, generating PDFs, or running FFmpeg commands) MUST happen in the `main` process to prevent freezing the React UI.
-- **Asynchronous Operations**: Use `async/await` and Promises for all file system, database, and hardware tasks. Avoid synchronous Node.js APIs (`fs.readFileSync`, etc.) whenever possible.
+- **Heavy Processing in Main**: Any CPU-intensive task (applying LUT filters, PDFs, FFmpeg) MUST happen in the `main` process to prevent freezing the UI or blocking the capture flow.
+- **Asynchronous Operations**: Use `async/await` for file system operations over synchronous forms (e.g. `fs.readFileSync`).
 
 ### Error Handling & Hardware
-- **Hardware Stability**: Interacting with physical devices (cameras, printers, USB) is prone to edge cases (e.g., unplugged devices, paper jams). Implement robust `try-catch` blocks and return structured error messages back to the renderer process.
-- **Logging**: Ensure backend errors are logged and safely communicated to the frontend so the user knows what went wrong without crashing the application.
+- **Hardware Stability**: DSLR logic and printer spooling are erratic. Implement detailed `try-catch` structures. Do not crash the app for a disconnected camera.
+- **Logging**: Consistently log hardware events silently without interrupting the user.
 
-### Frontend Development
-- **State**: Use Zustand for global state management. Keep stores modular.
-- **React Standards**: Use functional components and modern hooks. Keep pure UI components separate from logic-heavy container components if necessary.
-
-## 5. Scripts and Environments
-- **Development**: `npm run dev` (Starts Vite dev server + Electron).
-- **Build**: `npm run build` (Compiles TS + Vite build process).
-- **Packager**: `npm run build:win`, `npm run build:mac`, `npm run build:linux` (Uses electron-builder to generate installers in the `dist/` folder).
+### Aesthetic Principles
+- **Modern & Dynamic**: Implement premium aesthetics using vibrant layouts, dark modes, and subtle micro-animations (utilizing `framer-motion`). Avoid generic design patterns.
 
 ---
-*Note to AI Agent: Always verify the current state of files using codebase search before making sweeping changes, as there are custom scripts (like `patch-uri.js`, `pdf-patch.js`) and tests (`test-ffmpeg-*.js`) that might rely on specific internal behaviors.*
+
+## 5. Desktop Application Feature Flows (`src/renderer/pages/`)
+The Desktop UI is modeled through the following key loops:
+- **`Landing.tsx`**: The idle attract loop interface.
+- **`PaymentGateway.tsx`**: Payment verification loop.
+- **`FrameSelection.tsx`**: UI to choose custom layouts, photo counts, and print numbers.
+- **`CaptureSession.tsx`**: The core component managing live DSLR viewfeeds and camera countdowns.
+- **`ReviewSession.tsx`**: Post-processing UI allowing live LUT filter previews, pan/zoom crops, and retake decisions.
+- **`OutputPage.tsx`**: Loading tracker that invokes the Main Process to bundle the final boomerangs, GIFs, and print PDFs.
+- **`SharingPage.tsx`**: Explicitly displays the generated QR Code. This QR directs the visitor to the *External Website* for the photo claim mechanism.
+- **`PrintingPage.tsx`**: Background page quietly forwarding the generated PDF strip to the printer queue.
+- **`GalleryPage.tsx`**: Local viewer containing recent public prints.
+- **`AdminDashboard.tsx`**: Secure local dashboard for configuration, analytics (`.xlsx` export), and offline service health (`/monitor`).
+
+---
+
+## 6. AI Agent Continuous Updates & Changelog (CRITICAL RULE)
+Starting from April 2026, the AI Agent MUST update this file continuously. Whenever a new prompt execution results in a structural change, new feature logic, architectural decision, or any system modification, the AI Agent **must append a log to this file** to ensure this documentation remains a living source of truth.
+
+## 7. Cross-Workspace & Directory Access Rights
+**CRITICAL RULE FOR AI AGENT:**
+The AI Agent is explicitly authorized and encouraged to access, analyze, and modify files across multiple directories on this machine. If a task requires modifying both the Desktop App (`04_Sebooth`) and the Next.js Website (`06 Sebooth Proposal Company Profile\sebooth-website`), the AI Agent must proactively traverse between these paths without implicitly awaiting permission, ensuring an efficient, full-stack workflow.
+
+---
+
+### CHANGELOG
+- **April 2026 (Architecture Finalization)**: Clarified Desktop vs. Website portal separation. Defined strict rule that the Sharing Mechanism uses QR Codes pointing to the Web Portal, not LINE Bot/Webhooks. Formalized the Enterprise Cloud Architecture: Deploy Next.js Web Portal on Vercel (custom domain via Hostinger), store session IDs strictly in Supabase, load heavy assets (Photos/GIFs/Videos) to Google Cloud Storage (GCS), and use Cloudflare as a proxy CDN for GCS to reduce egress billing.
+- **April 2026 (Workflow Optimization)**: Added Cross-Workspace Access Rights. The AI Agent is now explicitly instructed to jump between the Desktop app (`04_Sebooth`) and Website (`sebooth-website`) directories to maintain efficiency. Restructuring into a single monorepo is NOT strictly necessary.
+- **April 2026 (Phase 1: Enterprise Hardening)**: Executed Phase 1 for the Desktop App. Implemented `UploadQueueService` bridging `cloud.ipc.ts` to retry GCS uploads if offline. Created `JanitorService` to auto-sweep temp caches older than 3 days. Hardened `src/main/index.ts` with global safeguards preventing entire application crashes due to unexpected Electron hardware/USB events.
+- **April 2026 (Dashboard Quality of Life UX)**: Fixed Admin Dashboard confusion where users thought settings required clicking "Set As Active" (which was actually only for template frames). Pushed the button strictly to the Frames tab and added an Auto-Save indicator globally. Added a new "Cloud Queue" tab so admins can monitor pending offline background uploads natively within the Desktop UI.
+- **April 2026 (Phase 1.5: Remote Web-Admin Architecture)**: Redesigned the operator flow from a monolithic Electron constraint into a distributed architecture ("Mesin Kolong"). Extracted Zustand local-storage configurations into a central Node.js `ConfigService`. Transformed `src/main/server.ts` Express bridge to not only serve local Photo Galleries, but to natively serve the Vite-React app itself over `localhost:5050`. Introduced Isomorphic `apiHelper` so the same React Dashboard code can run on a browser (`fetch`) or inside Electron (`ipcRenderer`) without crashing. Repaired slow Remote Printing by converting synchronous spooling to a non-blocking background queue.
+- **April 2026 (Print Queue Architecture)**: Centralized physical dye-sublimation print jobs into `src/main/services/PrintQueueService.ts`. Replaced raw PowerShell Fire-and-Forget promises with strict sequential queueing to prevent hardware spooler hangs. Print History is now durably persisted to `userData/sebooth_print_history.json`. Exposed endpoints `GET /api/print/queue` bridging real-time status arrays to the connected Admin iPads/Phones.
+- **April 2026 (Admin UI Overhaul)**: Solved widespread dead font-color contrasts by enforcing CSS Scoped Variables for Dark Mode (`--color-bg-primary: #111827`) isolated directly to the `.container` in `AdminDashboard.module.css`. This prevents the global `global.css` "Cream Light Mode" Kiosk properties from bleeding into the Admin settings panel ever again.

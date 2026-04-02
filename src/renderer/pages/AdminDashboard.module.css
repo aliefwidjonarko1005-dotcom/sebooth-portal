@@ -1,9 +1,22 @@
 .container {
+    /* Scoped Dark Mode Overrides for Admin Dashboard */
+    --color-bg-primary: #111827;
+    --color-bg-secondary: #1F2937;
+    --color-bg-tertiary: #374151;
+    --color-text-primary: #F9FAFB;
+    --color-text-secondary: #9CA3AF;
+    --color-text-tertiary: #6B7280;
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border-hover: rgba(255, 255, 255, 0.2);
+    --color-surface-hover: rgba(255, 255, 255, 0.05);
+    --color-surface-active: rgba(255, 255, 255, 0.1);
+
     width: 100%;
     height: 100vh;
     display: flex;
     flex-direction: column;
     background: var(--color-bg-primary);
+    color: var(--color-text-primary);
 }
 
 /* Header */
