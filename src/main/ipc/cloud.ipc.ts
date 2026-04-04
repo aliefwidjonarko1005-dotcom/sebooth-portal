@@ -2,21 +2,33 @@ import { ipcMain } from 'electron';
 import { Storage } from '@google-cloud/storage';
 import path from 'path';
 import fs from 'fs';
+import { config } from 'dotenv';
 import { uploadQueue } from '../services/UploadQueue';
 
-const keyPath = path.join(process.cwd(), 'google-key.json');
+// Load environment variables from .env
+config();
+
+
+// GCS Key Configuration
+const gcsKeyName = process.env.GCS_KEY_PATH || 'google-key.json';
+const keyPath = path.isAbsolute(gcsKeyName) 
+  ? gcsKeyName 
+  : path.join(process.cwd(), gcsKeyName);
+
 let storage: Storage | null = null;
 
 try {
   if (fs.existsSync(keyPath)) {
     storage = new Storage({ keyFilename: keyPath });
-    console.log('[Cloud Storage] Initialized successfully with google-key.json');
+    console.log(`[Cloud Storage] Initialized successfully with: ${path.basename(keyPath)}`);
   } else {
-    console.warn('[Cloud Storage] Missing google-key.json');
+    console.warn(`[Cloud Storage] Missing Google Cloud key at: ${keyPath}`);
+    console.warn('[Cloud Storage] Please set GCS_KEY_PATH in .env or place google-key.json in the root.');
   }
 } catch (error) {
   console.error('[Cloud Storage] Failed to initialize:', error);
 }
+
 
 // Background worker to retry failed uploads
 setInterval(async () => {
