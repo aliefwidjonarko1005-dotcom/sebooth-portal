@@ -1,0 +1,141 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.closeBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.closeBtn:hover {
+    background-color: #f0f0f0;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+    color: #333;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0 0 24px 0;
+    text-align: center;
+}
+
+.quantitySelector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.quantityBtn {
+    width: 48px;
+    height: 48px;
+    border: 2px solid #007bff;
+    background: white;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.quantityBtn:hover:not(:disabled) {
+    background: #007bff;
+    color: white;
+}
+
+.quantityBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #ccc;
+    color: #ccc;
+}
+
+.quantityDisplay {
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+    min-width: 60px;
+    text-align: center;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.cancelBtn,
+.confirmBtn {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancelBtn {
+    background: #f8f9fa;
+    color: #666;
+    border: 1px solid #dee2e6;
+}
+
+.cancelBtn:hover {
+    background: #e9ecef;
+}
+
+.confirmBtn {
+    background: #007bff;
+    color: white;
+}
+
+.confirmBtn:hover {
+    background: #0056b3;
+}

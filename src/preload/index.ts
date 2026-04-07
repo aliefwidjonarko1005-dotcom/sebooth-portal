@@ -49,11 +49,8 @@ const api = {
         print: (filePath: string, printerName?: string): Promise<APIResponse<PrintResult>> =>
             ipcRenderer.invoke('printer:print', filePath, printerName),
 
-        printWithOptions: (
-            filePath: string,
-            options: { printer?: string; copies?: number; scale?: 'fit' | 'noscale', sessionId?: string }
-        ): Promise<APIResponse<PrintResult>> =>
-            ipcRenderer.invoke('printer:print-with-options', filePath, options),
+        printWithOptions: (options: { printerName: string; data: string; copies: number; options?: any }): Promise<APIResponse<PrintResult>> =>
+            ipcRenderer.invoke('printer:print-with-options', options),
             
         getQueue: (): Promise<APIResponse<any[]>> =>
             ipcRenderer.invoke('printer:get-queue'),

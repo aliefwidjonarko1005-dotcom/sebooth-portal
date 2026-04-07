@@ -64,6 +64,8 @@ export class PrintQueueService {
         
         this.queue.push(job)
         console.log(`[PrintQueueService] Job ${job.id} added to queue.`)
+        console.log(`[PrintQueueService] Queue length: ${this.queue.length}`)
+        console.log(`[PrintQueueService] Job details:`, job)
         
         // Broadcast via WebContents
         this.broadcastState()
@@ -98,6 +100,7 @@ export class PrintQueueService {
 
     private async processQueue() {
         if (this.queue.length === 0) {
+            console.log('[PrintQueueService] Queue is empty, stopping processing')
             this.isProcessing = false
             return
         }
@@ -108,9 +111,12 @@ export class PrintQueueService {
         this.broadcastState()
 
         console.log(`[PrintQueueService] Processing job ${job.id}...`)
+        console.log(`[PrintQueueService] Job details:`, job)
 
         try {
             const result = await printerHandler.print(job.filePath, job.printerName, job.copies)
+            
+            console.log(`[PrintQueueService] Print result for job ${job.id}:`, result)
             
             job.completedAt = Date.now()
             if (result.success) {
@@ -120,6 +126,7 @@ export class PrintQueueService {
                 job.errorMessage = result.error
             }
         } catch (err: any) {
+            console.log(`[PrintQueueService] Exception during print job ${job.id}:`, err)
             job.status = 'FAILED'
             job.completedAt = Date.now()
             job.errorMessage = err.message

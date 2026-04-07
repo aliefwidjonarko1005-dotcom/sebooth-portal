@@ -54,7 +54,9 @@ const ReviewSession: React.FC = () => {
     const handleWheel = (e: React.WheelEvent, slotId: string) => {
         if (selectedSlotId !== slotId) return
         
-        const photo = photos.find(p => p.slotId === slotId)
+        const selectedSlot = sessionFrame.slots.find(s => s.id === slotId)
+        const sourceSlotId = selectedSlot?.duplicateOfSlotId || slotId
+        const photo = photos.find(p => p.slotId === sourceSlotId)
         if (!photo) return
         
         const currentScale = photo.scale || 1
@@ -63,7 +65,7 @@ const ReviewSession: React.FC = () => {
         let newScale = currentScale + (e.deltaY < 0 ? zoomSensitivity : -zoomSensitivity)
         newScale = Math.max(0.5, Math.min(newScale, 5))
         
-        updatePhoto(slotId, { scale: newScale })
+        updatePhoto(sourceSlotId, { scale: newScale })
     }
 
     const handleDragEnd = (event: any, info: any, physicalSlotId: string) => {
@@ -130,36 +132,61 @@ const ReviewSession: React.FC = () => {
 
     const handleZoomIn = () => {
         if (!selectedSlotId) return
-        const photo = photos.find(p => p.slotId === selectedSlotId)
+        const selectedSlot = sessionFrame.slots.find(s => s.id === selectedSlotId)
+        const sourceSlotId = selectedSlot?.duplicateOfSlotId || selectedSlotId
+        const photo = photos.find(p => p.slotId === sourceSlotId)
         if (!photo) return
         const newScale = Math.min((photo.scale || 1) + 0.1, 5)
-        updatePhoto(selectedSlotId, { scale: newScale })
+        updatePhoto(sourceSlotId, { scale: newScale })
     }
 
     const handleZoomOut = () => {
         if (!selectedSlotId) return
-        const photo = photos.find(p => p.slotId === selectedSlotId)
+        const selectedSlot = sessionFrame.slots.find(s => s.id === selectedSlotId)
+        const sourceSlotId = selectedSlot?.duplicateOfSlotId || selectedSlotId
+        const photo = photos.find(p => p.slotId === sourceSlotId)
         if (!photo) return
         const newScale = Math.max((photo.scale || 1) - 0.1, 0.5)
-        updatePhoto(selectedSlotId, { scale: newScale })
+        updatePhoto(sourceSlotId, { scale: newScale })
     }
 
     const handleRetake = () => {
         if (!selectedSlotId) return
-        removePhoto(selectedSlotId)
+        const selectedSlot = sessionFrame.slots.find(s => s.id === selectedSlotId)
+        const sourceSlotId = selectedSlot?.duplicateOfSlotId || selectedSlotId
+        removePhoto(sourceSlotId)
         navigate('/capture')
     }
 
     // Auto select first slot
     useEffect(() => {
         if (!selectedSlotId && sessionFrame.slots.length > 0) {
-            setSelectedSlotId(sessionFrame.slots[0].id)
+            const firstFilledSlot = sessionFrame.slots.find(slot => {
+                const sourceSlotId = slot.duplicateOfSlotId || slot.id
+                return photos.some(p => p.slotId === sourceSlotId)
+            })
+            setSelectedSlotId(firstFilledSlot?.id || sessionFrame.slots[0].id)
         }
-    }, [selectedSlotId, sessionFrame])
+    }, [selectedSlotId, sessionFrame, photos])
 
     // Retrieve current filter style
     const currentFilterDef = FILTERS.find(f => f.id === selectedFilter);
     const filterStyle = currentFilterDef ? currentFilterDef.style : {};
+
+    const selectedPhoto = selectedSlotId 
+        ? (() => {
+            const selectedSlot = sessionFrame.slots.find(s => s.id === selectedSlotId)
+            const sourceSlotId = selectedSlot?.duplicateOfSlotId || selectedSlotId
+            return photos.find(p => p.slotId === sourceSlotId)
+        })()
+        : (() => {
+            const firstFilledSlot = sessionFrame.slots.find(slot => {
+                const sourceSlotId = slot.duplicateOfSlotId || slot.id
+                return photos.some(p => p.slotId === sourceSlotId)
+            })
+            const sourceSlotId = firstFilledSlot?.duplicateOfSlotId || firstFilledSlot?.id
+            return sourceSlotId ? photos.find(p => p.slotId === sourceSlotId) : photos[0]
+        })()
 
     return (
         <motion.div 
@@ -201,10 +228,8 @@ const ReviewSession: React.FC = () => {
                             drawHeight = slot.width / imgAspect;
                         }
 
-                        // We use the photo's slotId + imagePath as a key.
-                        // When swap occurs, slotId stays the same for the physical box,
-                        // but the photo object's imagePath changes, forcing a remount.
-                        const motionKey = `${sourceSlotId}-${photo.imagePath}`;
+                        // Use the physical slot id plus the photo path so duplicate slots keep unique keys.
+                        const motionKey = `${slot.id}-${photo.imagePath}`;
 
                         return (
                             <div 
@@ -298,7 +323,7 @@ const ReviewSession: React.FC = () => {
                             onClick={() => setSessionFilter(filter.id)}
                         >
                             <div className={styles.filterPreview} style={filter.style}>
-                                {photos[0] && <img src={photos[0].imagePath} alt={filter.name} />}
+                                {selectedPhoto && <img src={selectedPhoto.imagePath} alt={filter.name} />}
                             </div>
                             <span>{filter.name}</span>
                         </button>
@@ -312,5 +337,6 @@ const ReviewSession: React.FC = () => {
         </motion.div>
     )
 }
+
 
 export default ReviewSession

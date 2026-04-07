@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'react-qr-code'
 import { useSessionStore, useAppConfig } from '../stores'
+import { PrintQuantityModal } from '../components/PrintQuantityModal'
 import styles from './SharingPage.module.css'
 
 function SharingPage(): JSX.Element {
@@ -13,6 +14,7 @@ function SharingPage(): JSX.Element {
     const [qrUrl, setQrUrl] = useState<string | null>(null)
     const [isGenerating, setIsGenerating] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
 
     useEffect(() => {
         if (!currentSession) {
@@ -81,8 +83,14 @@ function SharingPage(): JSX.Element {
     }
 
     const handlePrint = () => {
-        // Navigate to the printing page which will handle the actual print command and animation
-        navigate('/printing')
+        setIsPrintModalOpen(true)
+    }
+
+    const handlePrintConfirm = (quantity: number) => {
+        console.log('[SharingPage] handlePrintConfirm called with quantity:', quantity)
+        console.log('[SharingPage] Navigating to /printing with state:', { printQuantity: quantity })
+        // Navigate to the printing page with quantity
+        navigate('/printing', { state: { printQuantity: quantity } })
     }
 
     const handleHome = () => {
@@ -157,6 +165,13 @@ function SharingPage(): JSX.Element {
                     Print Photos
                 </motion.button>
             </div>
+
+            <PrintQuantityModal
+                isOpen={isPrintModalOpen}
+                onClose={() => setIsPrintModalOpen(false)}
+                onConfirm={handlePrintConfirm}
+                initialQuantity={2}
+            />
         </div>
     )
 }

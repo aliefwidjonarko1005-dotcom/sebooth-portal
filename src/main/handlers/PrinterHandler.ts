@@ -48,6 +48,8 @@ export class PrinterHandler {
      * @param copies Number of 4R pages to generate (each page = 2 strips)
      */
     async print(filePath: string, printerName?: string, copies: number = 1): Promise<PrintResult> {
+        console.log(`[PrinterHandler] Starting print job for file: ${filePath}, printer: ${printerName}, copies: ${copies}`)
+        
         try {
             // 1. Generate PDF for session logging purposes
             const pdfDoc = await PDFDocument.create()
@@ -77,6 +79,8 @@ export class PrinterHandler {
             // 2. Trigger physical printer silently via Native Windows Spooler (C# System.Drawing.Printing inside PS)
             // This is infinitely more reliable for strict dye-sub printers (DNP RX1) than SumatraPDF
             if (printerName && printerName.toLowerCase() !== 'print to pdf') {
+                console.log(`[PrinterHandler] Executing PowerShell print command for printer: ${printerName}`)
+                
                 try {
                     // Create a PowerShell script string that compiles and executes a C# print job.
                     // This bypasses any third-party PDF renderer quirks.
@@ -117,8 +121,11 @@ Add-Type -TypeDefinition $code -ReferencedAssemblies System.Drawing
                     const base64Command = Buffer.from(psCommand, 'utf16le').toString('base64')
                     
                     console.log(`Sending native print job to ${printerName} for ${numPages} copies...`)
+                    console.log(`[PrinterHandler] PowerShell command length: ${base64Command.length}`)
+                    
                     await execAsync(`powershell -EncodedCommand ${base64Command}`)
                     
+                    console.log(`[PrinterHandler] Print job completed successfully`)
                     return { success: true }
                 } catch (printErr: any) {
                     console.error('Physical print execution failed:', printErr)
